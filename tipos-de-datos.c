@@ -17,8 +17,8 @@ void OperadoresAritmeticos(int a, int b){
     int producto =      a * b;
     int dividendo =     a / b;
     int resto =         a % b;
-    a++ //incrementa un numero
-    b++ //decrementa un numero
+    a++; //incrementa un numero
+    b++; //decrementa un numero
 }
 
 int Casteo(long a){
@@ -63,7 +63,7 @@ void bucle(int a){
     }
 }
 
-class lista_simplemente_enlazada{
+struct lista_simplemente_enlazada{
     metadatos(lista){
         nodo* head
         size_t cant
@@ -95,6 +95,8 @@ class lista_simplemente_enlazada{
         bool avanzar(iter)              //O(1)
         void* obtener(iter)             //O(1)
         bool al_final(iter)             //O(1)
+        bool insert_front(iter,val)     
+
 
         iter* iter = create_first(lista)
         while(!al_final(iter)){
@@ -103,9 +105,9 @@ class lista_simplemente_enlazada{
         }
         print(obtener(iter))  
     }
-}
+};
 
-class lista_doblemente_enlazada{
+struct lista_doblemente_enlazada{
     metadatos(lista){
         nodo* head
         size_t cant
@@ -143,9 +145,9 @@ class lista_doblemente_enlazada{
         bool insert_back(iter,val)      //O(n)
         void* remover(iter)
     }
-}
+};
 
-class listas circulares{
+struct listas_circulares{
     // es una lista simplemente enlazada y un iterador
     /*j1 -> j2
     j2 -> j3
@@ -172,10 +174,10 @@ class listas circulares{
         size_t largo(l);                //O(1)
         bool vacia(l);                  //O(1)
         }
-}
+};
 
 
-class listas circulares_Doblemente_Enlazadas{
+struct listas circulares_Doblemente_Enlazadas{
     metadatos(lista){
         nodo* actual
         size_t cant
@@ -199,4 +201,69 @@ class listas circulares_Doblemente_Enlazadas{
         size_t largo(l);                //O(1)
         bool vacia(l);                  //O(1)
         }
+};
+
+struct pila(stack){
+    #Pila es una estructura LIFO(Last in First out)
+
+    primitivas{
+        pila* crear():    //O(1)
+        void destruir(pila* p);   //O(1) o O(n) si borro los datos
+        bool push(pila* p, void* dato):   //O(1)
+        void* pop(pila* p);   //O(1)
+        size_t cantidad();
+        bool is_empty()
+    }
+
+    metadatos(VD):  #vector dinamico
+    void** datos
+    size_t cant
+
+    primitivas{
+        pila* crear():    //O(1)
+            void** datos= malloc(sizeof(void*)*2)
+            pila* p=malloc(sizeof(pila))
+            p -> cant = 0
+            p -> datos = datos
+            return p;
+        void destruir(pila* p);   //O(1) o O(n) si borro los datos
+            free(p -> datos)
+            free(p)
+        bool push(pila* p, void* dato):   //O(1)
+            p ->dato [p -> cant] = datos
+            p -> cant ++
+    }
+
+
+    metadatos(listas):  #vector dinamico
+        lista* l
+
+    primitivas{
+        pila* crear():
+            p = malloc(sizeof(pila))
+            p -> l = lista-crear()
+        bool push(p, dato):
+            return lista-insert_first(p -> l, dato)
+        void* pop(p):
+            return lista-pop_first(p -> l)
+    }
+};
+
+
+struct Cola(queue){
+    //FIFO first in first out
+
+    primitivas{
+        cola* crear();          //O(1)
+        void destruir();        //O(n)
+        bool encolar(c, dato);  //O(1)
+        void* desencolar(c);    //O(1)
+    }
+
+    metadatos:
+        lista* l;
+
+    metadatos:
+        pila* p1
+        pila* p2
 }
