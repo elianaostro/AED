@@ -1,0 +1,23 @@
+Enunciado: 
+Después de pensarlo por años finalmente tomó la decisión: Ana se mudó a Cuba, había soñado con ello toda su vida. Una tarde estaba en la orilla del río disfrutando del paisaje cuando recordó una canción. Comenzó a cantarla a viva voz:
+
+La bella y graciosa moza
+marchose a lavar la ropa,
+la mojó, la mojó,
+la mojó en el arroyuelo,
+y cantando la lavó.
+La frotó sobre una piedra,
+la colgó de un abedul.
+
+Después de deleitarse durante algunas horas con la naturaleza, volvió a su casa. En el camino se encontró con Roberto, el hijo de su vecina. Le dijo:
+
+– ¿Robertito, está tu mamá en casa?
+
+– No, está trabajando. – contestó Roberto con cara de enojado. Luego agregó – No me
+dicen Robertito, me dicen Robertico.
+
+Ana jamás había escuchado ese tipo de diminutivos, era algo muy común en el Caribe
+pero nuevo para ella. Roberto le explicó que se usaba para nombres que terminaban en
+‘a’ u ‘o’, se les agregaba 'ic' antes de la última letra. Ana entendió pero tiene miedo de
+confundirse, ¿pueden ayudarla haciendo un programa que le diga cuál es el diminutivo
+de cada nombre?
