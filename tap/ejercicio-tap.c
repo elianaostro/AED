@@ -7,20 +7,15 @@
 
 void setDiminutivo(const char *nombre, char *diminutivo) {
     strcpy(diminutivo, nombre);
-    int i = 0;
-    while (diminutivo[i]!='\0'){
-        i++;
-    }
-    char ultima = diminutivo[i-1];
-    if (ultima == 'a'||ultima == 'o' ){
-        diminutivo[i-1] = '\0';
-        char final[]={'i','c', ultima ,'\0'};
+    if (nombre[strlen(nombre)] == 'a'|| nombre[strlen(nombre)] == 'o' ){
+        diminutivo[strlen(nombre)] = '\0';
+        char final[]={'i','c', nombre[strlen(nombre)] ,'\0'};
         strcat(diminutivo,final);
     } 
 }
 
 char* getDiminutivo(const char* nombre) {
-    char * diminutivo = malloc(sizeof(char) * strlen(nombre) + 1);
+    char * diminutivo = malloc(sizeof(char) * strlen(nombre) + 3);
     setDiminutivo(nombre, diminutivo);
 
     return diminutivo;
