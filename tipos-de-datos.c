@@ -283,3 +283,8 @@ typedef struct nodo{
     void* dato;
     struct nodo* sig;
 } nodo_t;
+
+typedef struct heap{
+    // una estrutura que te devuelve el max o min en O(1)
+    
+};
