@@ -103,6 +103,7 @@ bool dictionary_delete (dictionary_t *dictionary, const char *key) {
 
 void *dictionary_pop (dictionary_t *dictionary, const char *key, bool *err) {
   size_t index = hash (key, dictionary -> arraySize);
+
   while (dictionary -> nodos[index] && dictionary -> nodos[index] -> key) {
     if (!strcmp (dictionary -> nodos[index] -> key, key)) {
       void* value = dictionary -> nodos[index] -> value;
@@ -133,24 +134,39 @@ size_t dictionary_size (dictionary_t *dictionary) {
   return dictionary -> elems; 
   };
 
+// void dictionary_destroy (dictionary_t *dictionary){
+//   nodos_destroy(dictionary -> nodos, dictionary -> arraySize, dictionary -> destroy);
+//   free (dictionary);
+// }
+
+// void nodos_destroy(node_t** nodos, size_t arraySize, destroy_f destroy){
+//   bool existe_destroy = destroy;
+//   for (size_t i = 0; i < arraySize; i++)
+//     if (nodos[i]){
+//       if (nodos[i] -> key){
+//         if (existe_destroy)
+//           destroy(nodos[i] -> value);
+//         free(nodos[i] -> key);
+//       }
+//       free(nodos[i]);
+//     }
+//   free(nodos);
+// };
+
 void dictionary_destroy (dictionary_t *dictionary){
-  nodos_destroy(dictionary -> nodos, dictionary -> arraySize, dictionary -> destroy);
+ bool existe_destroy = dictionary -> destroy;
+  for (size_t i = 0; i < dictionary -> arraySize; i++)
+    if (dictionary -> nodos[i]){
+      if (dictionary -> nodos[i] -> key){
+        if (existe_destroy)
+          dictionary -> destroy(dictionary -> nodos[i] -> value);
+        free(dictionary -> nodos[i] -> key);
+      }
+      free(dictionary -> nodos[i]);
+    }
+  free(dictionary -> nodos);  
   free (dictionary);
 }
-
-void nodos_destroy(node_t** nodos, size_t arraySize, destroy_f destroy){
-  bool existe_destroy = destroy;
-  for (size_t i = 0; i < arraySize; i++)
-    if (nodos[i]){
-      if (nodos[i] -> key){
-        if (existe_destroy)
-          destroy(nodos[i] -> value);
-        free(nodos[i] -> key);
-      }
-      free(nodos[i]);
-    }
-  free(nodos);
-};
 
 size_t hash (const char *key, size_t size) {
   size_t hash = 0;

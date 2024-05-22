@@ -343,7 +343,7 @@ int main(void) {
   return_code += !test_put_get_delete_loop();
   return_code += !test_put_NULL();
   return_code += !test_insert_random_sequence(512, 117, false);
-  // return_code += !test_insert_random_sequence(512, 117, true);
+  return_code += !test_insert_random_sequence(512, 117, true);
   // return_code += !test_insert_random_sequence(2048, 117, false);
   // return_code += !test_insert_random_sequence(2048, 117, true);
   // return_code += !test_insert_random_sequence(65536, 117, false);
