@@ -3,38 +3,36 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define SIZE_INITIAL 100
-#define CAPACITY_FACTOR 0.75
+#define SIZE_INITIAL 128
+#define CAPACITY_FACTOR 0.7
 #define RESIZE_FACTOR 2
 
+typedef void (*destroy_f) (void *);
 typedef struct Node {
 	char* key;
 	void* value;
 } node_t;
 
-struct dictionary {
-  size_t elems;
-  size_t arraySize;
+typedef struct dictionary {
+  size_t size;
+  size_t capacity;
   node_t** nodos;
   destroy_f destroy;
-};
+} dictionary_t;
 
-typedef struct dictionary dictionary_t;
-typedef void (*destroy_f) (void *);
 
 size_t hash (const char *key, size_t size);
 bool rehash (dictionary_t *dictionary);
-void nodos_destroy(node_t** nodos, size_t arraySize, destroy_f destroy);
 
 dictionary_t *dictionary_create (destroy_f destroy) { 
   dictionary_t* dictionary = malloc (sizeof (dictionary_t));
   if (!dictionary)  return NULL;
 
-  dictionary -> elems = 0;
-  dictionary -> arraySize = SIZE_INITIAL;
+  dictionary -> size = 0;
+  dictionary -> capacity = SIZE_INITIAL;
   dictionary -> destroy = destroy;
-  dictionary -> nodos = calloc (SIZE_INITIAL , sizeof (node_t*));
 
+  dictionary -> nodos = calloc (SIZE_INITIAL , sizeof (node_t*));
   if (!dictionary -> nodos) {
     free (dictionary);
     return NULL;
@@ -44,20 +42,22 @@ dictionary_t *dictionary_create (destroy_f destroy) {
 };
 
 bool dictionary_put (dictionary_t *dictionary, const char *key, void *value) {
-  if ((float) dictionary -> arraySize * CAPACITY_FACTOR < dictionary -> elems + 1)
+  if (((float) dictionary->size)/ ((float) dictionary->capacity) > CAPACITY_FACTOR)
     if (!rehash (dictionary))
       return false;
 
-  size_t index = hash (key, dictionary -> arraySize);
+  size_t index = hash (key, dictionary -> capacity);
 
   while (dictionary -> nodos[index] && dictionary -> nodos[index] -> key) {
-    if (!strcmp (dictionary -> nodos[index] -> key, key)) {
-      if (dictionary -> destroy)
+    if (strcmp (dictionary -> nodos[index] -> key, key) == 0) {
+      if (dictionary -> destroy && dictionary->nodos[index]->value)
         dictionary -> destroy (dictionary -> nodos[index] -> value);
       dictionary -> nodos[index] -> value = value;
       return true;
     }
-    index = (index + 1) % dictionary -> arraySize;
+    index = (index + 1) % dictionary -> capacity;
+    if (index == hash (key, dictionary -> capacity))
+      return false;
   }
   
   if (!dictionary -> nodos[index]){
@@ -66,25 +66,25 @@ bool dictionary_put (dictionary_t *dictionary, const char *key, void *value) {
     dictionary -> nodos[index] = new_node;
   }
 
-  char* copy_key = malloc (strlen (key) + 1);
+  char* copy_key = malloc ((strlen (key) + 1) * sizeof (char));
   if (!copy_key) return false;
   strcpy(copy_key, key);
 
   dictionary -> nodos[index] -> key = copy_key;
   dictionary -> nodos[index] -> value = value;
-  dictionary -> elems++;
+  dictionary -> size++;
   
   return true;
 };
 
 void *dictionary_get (dictionary_t *dictionary, const char *key, bool *err) {
-  size_t index = hash (key, dictionary -> arraySize);
-  while (dictionary -> nodos[index] && dictionary -> nodos[index] -> key) {
-    if (!strcmp (dictionary -> nodos[index] -> key, key)) {
+  size_t index = hash (key, dictionary -> capacity);
+  while (dictionary -> nodos[index]) {
+    if (dictionary -> nodos[index] -> key && !strcmp (dictionary -> nodos[index] -> key, key)) {
       *err = false;
       return dictionary -> nodos[index] -> value;
     }
-    index = (index + 1) % dictionary -> arraySize;
+    index = (index + 1) % dictionary -> capacity;
   }
   *err = true;
   return NULL;
@@ -93,72 +93,54 @@ void *dictionary_get (dictionary_t *dictionary, const char *key, bool *err) {
 bool dictionary_delete (dictionary_t *dictionary, const char *key) {
   bool err;
   void* value = dictionary_pop (dictionary, key, &err);
-  if (!err) {
-    if (dictionary -> destroy)
-      dictionary -> destroy (value);
-    return true;
-  }
-  return false;
+  if (err) return false;
+  if (dictionary -> destroy && value) dictionary -> destroy(value);
+  return true;
 };
 
 void *dictionary_pop (dictionary_t *dictionary, const char *key, bool *err) {
-  size_t index = hash (key, dictionary -> arraySize);
+  size_t index = hash (key, dictionary -> capacity);
 
-  while (dictionary -> nodos[index] && dictionary -> nodos[index] -> key) {
-    if (!strcmp (dictionary -> nodos[index] -> key, key)) {
+  while (dictionary -> nodos[index]) {
+    if (dictionary -> nodos[index] -> key && !strcmp(dictionary -> nodos[index] -> key, key)) {
       void* value = dictionary -> nodos[index] -> value;
       free (dictionary -> nodos[index] -> key);
       dictionary -> nodos[index] -> key = NULL;
       dictionary -> nodos[index] -> value = NULL;
-      dictionary -> elems--;
+      dictionary -> size--;
       *err = false;
       return value;
     }
-    index = (index + 1) % dictionary -> arraySize;
+    index = (index + 1) % dictionary -> capacity;
+    if (index == hash (key, dictionary -> capacity)){
+      *err = true;
+      return NULL;
+    }
   }
   *err = true;
   return NULL;
 };
 
 bool dictionary_contains (dictionary_t *dictionary, const char *key) {
-  size_t index = hash (key, dictionary -> arraySize);
-  while (dictionary -> nodos[index] && dictionary -> nodos[index] -> key) {
-    if (!strcmp (dictionary -> nodos[index] -> key, key))
+  size_t index = hash (key, dictionary -> capacity);
+  while (dictionary -> nodos[index]) {
+    if (dictionary -> nodos[index] -> key && !strcmp (dictionary -> nodos[index] -> key, key))
       return true;
-    index = (index + 1) % dictionary -> arraySize;
+    index = (index + 1) % dictionary -> capacity;
   }
   return false;
 };
 
 size_t dictionary_size (dictionary_t *dictionary) { 
-  return dictionary -> elems; 
-  };
-
-// void dictionary_destroy (dictionary_t *dictionary){
-//   nodos_destroy(dictionary -> nodos, dictionary -> arraySize, dictionary -> destroy);
-//   free (dictionary);
-// }
-
-// void nodos_destroy(node_t** nodos, size_t arraySize, destroy_f destroy){
-//   bool existe_destroy = destroy;
-//   for (size_t i = 0; i < arraySize; i++)
-//     if (nodos[i]){
-//       if (nodos[i] -> key){
-//         if (existe_destroy)
-//           destroy(nodos[i] -> value);
-//         free(nodos[i] -> key);
-//       }
-//       free(nodos[i]);
-//     }
-//   free(nodos);
-// };
+  return dictionary -> size; 
+};
 
 void dictionary_destroy (dictionary_t *dictionary){
  bool existe_destroy = dictionary -> destroy;
-  for (size_t i = 0; i < dictionary -> arraySize; i++)
+  for (size_t i = 0; i < dictionary -> capacity; i++)
     if (dictionary -> nodos[i]){
       if (dictionary -> nodos[i] -> key){
-        if (existe_destroy)
+        if (existe_destroy && dictionary->nodos[i]->value)
           dictionary -> destroy(dictionary -> nodos[i] -> value);
         free(dictionary -> nodos[i] -> key);
       }
@@ -169,51 +151,33 @@ void dictionary_destroy (dictionary_t *dictionary){
 }
 
 size_t hash (const char *key, size_t size) {
-  size_t hash = 0;
-  for (int i = 0; key[i] != '\0'; i++) {
-    hash = (hash * 256 + key[i]) % size;
-  }
-  return hash;
+  size_t hash = 2166136261u;
+    for (int i = 0; key[i] != '\0'; i++) {
+        hash ^= key[i];
+        hash *= 16777619;
+    }
+    return hash % size;
 }
 
-// bool rehash (dictionary_t *dictionary) {
-//   size_t oldSize = dictionary -> arraySize;
-//   node_t** newNodes = calloc (oldSize * RESIZE_FACTOR, sizeof (node_t*));
-//   if (!newNodes) return false;
-
-//   node_t** oldNodes = dictionary -> nodos;
-//   dictionary -> nodos = newNodes;
-//   dictionary -> arraySize = oldSize * RESIZE_FACTOR;
-
-//   for (size_t i = 0; i < oldSize; i++)
-//     if (oldNodes[i] && oldNodes[i] -> key)
-//       if (!dictionary_put (dictionary, oldNodes[i] -> key, oldNodes[i] -> value)){
-//         nodos_destroy (newNodes, dictionary -> arraySize, dictionary -> destroy);
-//         dictionary -> nodos = oldNodes;
-//         dictionary -> arraySize = oldSize;
-//         return false;
-//       }
-  
-//   nodos_destroy (oldNodes, oldSize, dictionary -> destroy);
-//   return true;
-// }
-
 bool rehash (dictionary_t *dictionary) {
-  size_t oldSize = dictionary -> arraySize;
+  size_t oldSize = dictionary -> capacity;
   node_t** newNodes = calloc (oldSize * RESIZE_FACTOR, sizeof (node_t*));
   if (!newNodes) return false;
 
   node_t** oldNodes = dictionary -> nodos;
   dictionary -> nodos = newNodes;
-  dictionary -> arraySize = oldSize * RESIZE_FACTOR;
+  dictionary -> capacity = oldSize * RESIZE_FACTOR;
 
   for (size_t i = 0; i < oldSize; i++)
     if (oldNodes[i]){
       if (oldNodes[i] -> key){
-        size_t index = hash (oldNodes[i] -> key, dictionary -> arraySize);
+        size_t index = hash (oldNodes[i] -> key, dictionary -> capacity);
+        while (dictionary->nodos[index])
+          index = (index + 1) % dictionary -> capacity;
         dictionary -> nodos[index] = oldNodes[i];
+      } else {
+        free(oldNodes[i]);
       }
-      free(oldNodes[i]);
     }
   free(oldNodes);
   return true;
