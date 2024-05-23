@@ -5,16 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 bool test_create_and_destroy_dict() {
   printf("========== %s ==========\n", __PRETTY_FUNCTION__);
   bool tests_result = true;
-  clock_t start = clock();
   dictionary_t *dict = dictionary_create(free);
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de creación del diccionario: %f segundos\n", time_spent);
   tests_result &= test_assert("El diccionario fue creado", dict != NULL);
   dictionary_destroy(dict);
   return tests_result;
@@ -24,11 +19,7 @@ bool test_create_failed() {
   printf("========== %s ==========\n", __PRETTY_FUNCTION__);
   bool tests_result = true;
   set_malloc_status(false);
-  clock_t start = clock();
   dictionary_t *dict = dictionary_create(free);
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de creación fallida del diccionario: %f segundos\n", time_spent);
   set_malloc_status(true);
   tests_result &= test_assert("El diccionario no fue creado", dict == NULL);
   return tests_result;
@@ -37,11 +28,7 @@ bool test_create_failed() {
 bool test_create_dict_nodestroy() {
   printf("========== %s ==========\n", __PRETTY_FUNCTION__);
   bool tests_result = true;
-  clock_t start = clock();
   dictionary_t *dict = dictionary_create(NULL);
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de creación del diccionario sin destroy: %f segundos\n", time_spent);
   tests_result &= test_assert("El diccionario fue creado", dict != NULL);
   dictionary_destroy(dict);
   return tests_result;
@@ -53,34 +40,22 @@ bool test_put_malloc_fail() {
   dictionary_t *dict = dictionary_create(NULL);
   tests_result &= test_assert("El tamaño es cero", dictionary_size(dict) == 0);
   int one = 1, two = 2;
-
-  clock_t start = clock();
   tests_result &=
       test_assert("Se puede insertar key1", dictionary_put(dict, "key1", &one));
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de inserción de key1: %f segundos\n", time_spent);
-
   tests_result &= test_assert("El diccionario contiene key1",
                               dictionary_contains(dict, "key1"));
   tests_result &= test_assert("El diccionario no contiene key2",
                               !dictionary_contains(dict, "key2"));
   tests_result &= test_assert("El tamaño es uno", dictionary_size(dict) == 1);
-
   set_malloc_status(false);
-  start = clock();
   tests_result &= test_assert("No se puede insertar key2",
                               !dictionary_put(dict, "key2", &two));
-  end = clock();
-  time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de fallo en la inserción de key2: %f segundos\n", time_spent);
-
   set_malloc_status(true);
   tests_result &= test_assert("El diccionario contiene key1",
                               dictionary_contains(dict, "key1"));
   tests_result &= test_assert("El diccionario no contiene key2",
                               !dictionary_contains(dict, "key2"));
-  tests_result &= test_assert("El tamaño es uno", dictionary_size(dict) == 1);
+  tests_result &= test_assert("El tamaño es dos", dictionary_size(dict) == 1);
   dictionary_destroy(dict);
   return tests_result;
 }
@@ -91,26 +66,15 @@ bool test_put_size() {
   dictionary_t *dict = dictionary_create(NULL);
   tests_result &= test_assert("El tamaño es cero", dictionary_size(dict) == 0);
   int one = 1, two = 2;
-
-  clock_t start = clock();
   tests_result &=
       test_assert("Se puede insertar key1", dictionary_put(dict, "key1", &one));
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de inserción de key1: %f segundos\n", time_spent);
-
   tests_result &= test_assert("El diccionario contiene key1",
                               dictionary_contains(dict, "key1"));
   tests_result &= test_assert("El diccionario no contiene key2",
                               !dictionary_contains(dict, "key2"));
   tests_result &= test_assert("El tamaño es uno", dictionary_size(dict) == 1);
-
-  start = clock();
   tests_result &=
       test_assert("Se puede insertar key2", dictionary_put(dict, "key2", &two));
-  end = clock();
-  time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de inserción de key2: %f segundos\n", time_spent);
 
   tests_result &= test_assert("El diccionario contiene key1",
                               dictionary_contains(dict, "key1"));
@@ -127,28 +91,15 @@ bool test_pop_get() {
   dictionary_t *dict = dictionary_create(NULL);
   int one = 1;
   bool err;
-
   dictionary_put(dict, "key0", &one);
-
-  clock_t start = clock();
   tests_result &= test_assert("Obtener key0 retorna el puntero correcto",
                               dictionary_get(dict, "key0", &err) == &one);
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de obtención de key0: %f segundos\n", time_spent);
-
   tests_result &= test_assert("No hay error", !err);
   tests_result &= test_assert("Obtener key0 y comparar valor",
                               *(int *)dictionary_get(dict, "key0", &err) == 1);
   tests_result &= test_assert("No hay error", err == false);
-
-  start = clock();
   tests_result &= test_assert("Hacer pop de key0",
                               dictionary_pop(dict, "key0", &err) == &one);
-  end = clock();
-  time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de pop de key0: %f segundos\n", time_spent);
-
   tests_result &= test_assert("No hay error", err == false);
   tests_result &=
       test_assert("key0 es NULL", dictionary_get(dict, "key0", &err) == NULL);
@@ -163,25 +114,12 @@ bool test_get_errcode() {
   dictionary_t *dict = dictionary_create(NULL);
   int one = 1;
   bool err;
-
-  clock_t start = clock();
   void *retval = dictionary_get(dict, "key1", &err);
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de obtención fallida de key1: %f segundos\n", time_spent);
-
   tests_result &= test_assert("Se retorna NULL", retval == NULL);
   tests_result &= test_assert("Se marca error al obtener", err == true);
-
   tests_result &=
       test_assert("Se inserta el uno", dictionary_put(dict, "key1", &one));
-
-  start = clock();
   retval = dictionary_get(dict, "key1", &err);
-  end = clock();
-  time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de obtención de key1: %f segundos\n", time_spent);
-
   tests_result &= test_assert("Se retorna one", retval == &one);
   tests_result &= test_assert("El valor es correcto", *(int *)retval == 1);
   tests_result &= test_assert("No hay error al obtener", err == false);
@@ -201,27 +139,16 @@ bool test_put_get_delete_loop() {
     int *value = malloc(sizeof(int));
     *value = 1;
     bool err = true;
-
-    clock_t start = clock();
     tests_result &= test_assert("No existe la clave key",
                                 NULL == dictionary_get(dict, key, &err));
-    clock_t end = clock();
-    double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("Tiempo de obtención de clave no existente: %f segundos\n", time_spent);
-
     tests_result &= test_assert("Err es true", err == true);
     err = false;
     tests_result &= test_assert("No existe la clave key",
                                 NULL == dictionary_get(dict, key, &err));
     tests_result &= test_assert("Err es true", err == true);
 
-    start = clock();
     tests_result &= test_assert("Se puede insertar key-value",
                                 dictionary_put(dict, key, value0));
-    end = clock();
-    time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("Tiempo de inserción de key-value: %f segundos\n", time_spent);
-
     tests_result &= test_assert("Se puede re-insertar key-value",
                                 dictionary_put(dict, key, value));
 
@@ -264,14 +191,8 @@ bool test_put_NULL() {
   printf("========== %s ==========\n", __PRETTY_FUNCTION__);
   bool tests_result = true;
   dictionary_t *dict = dictionary_create(NULL);
-
-  clock_t start = clock();
   tests_result &= test_assert("Se puede insertar key con valor NULL",
                               dictionary_put(dict, "key0", NULL));
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de inserción de key con valor NULL: %f segundos\n", time_spent);
-
   bool err;
   void *result = dictionary_get(dict, "key0", &err);
   tests_result &= test_assert("No hay error", !err);
@@ -292,8 +213,6 @@ bool test_insert_random_sequence(size_t n, unsigned int seed, bool delete) {
   bool insert = true;
   bool size_correct = true;
   size_t uniques = 0;
-
-  clock_t start = clock();
   for (size_t i = 0; i < n; i++) {
     int random_number = rand();
     int length = snprintf(NULL, 0, "%d", random_number);
@@ -312,10 +231,6 @@ bool test_insert_random_sequence(size_t n, unsigned int seed, bool delete) {
     size_correct &= (dictionary_size(dict) == uniques);
     free(str);
   }
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de inserción de %lu elementos: %f segundos\n", n, time_spent);
-
   tests_result &= test_assert("Todas las inserciones fueron exitosas", insert);
   tests_result &= test_assert("El tamaño fue siempre correcto", size_correct);
 
@@ -324,7 +239,6 @@ bool test_insert_random_sequence(size_t n, unsigned int seed, bool delete) {
   bool correct = true;
   size_t rep_idx = 0;
 
-  start = clock();
   for (size_t i = 0; i < n; i++) {
     int random_number = rand();
     if (random_number == repeats[rep_idx]) {
@@ -340,9 +254,6 @@ bool test_insert_random_sequence(size_t n, unsigned int seed, bool delete) {
     correct &= (retval && *(int *)retval == random_number);
     free(str);
   }
-  end = clock();
-  time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de verificación de %lu elementos: %f segundos\n", n, time_spent);
 
   tests_result &= test_assert("Todas las claves están presentes", contains);
   tests_result &= test_assert("Todos los valores son correctos", correct);
@@ -354,7 +265,6 @@ bool test_insert_random_sequence(size_t n, unsigned int seed, bool delete) {
     rep_idx = 0;
     bool first_pass = true;
 
-    start = clock();
     for (size_t i = 0; i < n; i++) {
       int random_number = rand();
       if (repeats[rep_idx] == random_number) {
@@ -384,10 +294,6 @@ bool test_insert_random_sequence(size_t n, unsigned int seed, bool delete) {
       delete_size_ok &= this_delete_size_ok;
       free(str);
     }
-    end = clock();
-    time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("Tiempo de eliminación de %lu elementos: %f segundos\n", n, time_spent);
-
     tests_result &=
         test_assert("Todos los deletes fueron correctos", delete_ok);
     tests_result &= test_assert("Todos los tamaños al borrar fueron correctos",
@@ -403,11 +309,7 @@ bool test_malloc_fail_create() {
   printf("========== %s ==========\n", __PRETTY_FUNCTION__);
   bool tests_result = true;
   set_malloc_status(false);
-  clock_t start = clock();
   dictionary_t *dict = dictionary_create(NULL);
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de creación fallida del diccionario: %f segundos\n", time_spent);
   tests_result &= test_assert(
       "La creación del diccionario falló y se retorna NULL", dict == NULL);
   set_malloc_status(true);
@@ -420,11 +322,7 @@ bool test_fail_insert() {
   set_malloc_status(true);
   dictionary_t *dict = dictionary_create(free);
   set_malloc_status(false);
-  clock_t start = clock();
   bool insert = dictionary_put(dict, "key", NULL);
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-  printf("Tiempo de fallo en la inserción: %f segundos\n", time_spent);
   test_assert("No se pudo insertar", !insert);
   tests_result &= !insert;
   set_malloc_status(true);
@@ -435,7 +333,6 @@ bool test_fail_insert() {
 int main(void) {
   srand(117);
   int return_code = 0;
-  clock_t start = clock();
   return_code += !test_create_and_destroy_dict();
   return_code += !test_create_failed();
   return_code += !test_create_dict_nodestroy();
@@ -454,13 +351,10 @@ int main(void) {
   return_code += !test_insert_random_sequence(1048576, 117, false);
   return_code += !test_malloc_fail_create();
   return_code += !test_fail_insert();
-  clock_t end = clock();
-  double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
   if (return_code == 0) {
     printf("Todo ok!\n");
   } else {
     printf("Error code is %d\n", return_code);
   }
-  printf("Tiempo total de ejecución de todos los tests: %f segundos\n", time_spent);
   return return_code;
 }
