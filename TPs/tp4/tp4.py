@@ -80,34 +80,17 @@ def shortest_path_bfs(graph: Graph, start: str, end: str) -> List[str]:
 
 # 1) ¿Cuál es el tamaño de la componente conexa más grande? ¿Cuántas componentes conexas hay?
 
-def dfs1(nodo, grafo, componente, componente_actual):
-    # agregamos el nodo a la componente
-    componente[nodo] = componente_actual
-    for vecino in grafo[nodo]:
-        if componente[vecino] != componente_actual:
-            dfs1(vecino, grafo, componente, componente_actual)
-
-def hallar_componentes_conexas(graph):
-    n = len(graph.get_vertices())
-    # lista que guarda a qué componente pertenece cada nodo
-    componente = [-1] * n
-    cantidad_componentes = 0
-
-    for i in range(n):
-        # si no encontramos ya la componente del nodo i
-        if componente[i] == -1:
-            # marcamos a todos los nodos de la componente de i con el número cantidad_componentes
-            dfs1(i, graph, componente, cantidad_componentes)
-            cantidad_componentes += 1
-
-    return cantidad_componentes
-
-    # # Se puede devolver directamente la lista componente si nos es más cómodo para el problema
-    # componentes = [[] for _ in range(cantidad_componentes)]
-    # for i in range(n):
-    #     componentes[componente[i]].append(i)
-    
-    # return componentes
-
-print(hallar_componentes_conexas(page_graph))
-
+def largest_connected_component(graph: Graph) -> int:
+    """
+    Encuentra el tamaño de la componente conexa más grande
+    :param graph: El grafo a analizar
+    :return: El tamaño de la componente conexa más grande
+    """
+    visitados = []
+    componentes = []
+    for v in graph:
+        if v not in visitados:
+            componente = bfs(graph, v)
+            componentes.append(componente)
+            visitados.extend(componente)
+    return max([len(c) for c in componentes])
