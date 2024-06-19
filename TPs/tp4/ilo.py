@@ -363,150 +363,150 @@ class Graph:
         binary_search_time(2, len(vertices))
         return circumference[0]
     
-    # def _strong_connect(self, vertex: str) -> None:
-    #     """
-    #     Non-recursive helper function for Tarjan's algorithm to find strongly connected components
-    #     """
-    #     stack = [(vertex, 0)]
-    #     visited = set()
+    def _strong_connect(self, vertex: str) -> None:
+        """
+        Non-recursive helper function for Tarjan's algorithm to find strongly connected components
+        """
+        stack = [(vertex, 0)]
+        visited = set()
         
-    #     while stack:
-    #         v, index = stack[-1]
+        while stack:
+            v, index = stack[-1]
             
-    #         if v not in visited:
-    #             visited.add(v)
-    #             self._indices[v] = self._index
-    #             self._low_links[v] = self._index
-    #             self._index += 1
-    #             self._stack.append(v)
-    #             self._on_stack.add(v)
+            if v not in visited:
+                visited.add(v)
+                self._indices[v] = self._index
+                self._low_links[v] = self._index
+                self._index += 1
+                self._stack.append(v)
+                self._on_stack.add(v)
             
-    #         neighbors = self.get_neighbors(v)
+            neighbors = self.get_neighbors(v)
             
-    #         if index < len(neighbors):
-    #             neighbor = neighbors[index]
-    #             stack[-1] = (v, index + 1)
+            if index < len(neighbors):
+                neighbor = neighbors[index]
+                stack[-1] = (v, index + 1)
                 
-    #             if neighbor not in self._indices:
-    #                 stack.append((neighbor, 0))
-    #             elif neighbor in self._on_stack:
-    #                 self._low_links[v] = min(self._low_links[v], self._indices[neighbor])
-    #         else:
-    #             if self._low_links[v] == self._indices[v]:
-    #                 scc = set()
-    #                 while True:
-    #                     w = self._stack.pop()
-    #                     self._on_stack.remove(w)
-    #                     scc.add(w)
-    #                     if w == v:
-    #                         break
-    #                 self._sccs.append(scc)
-    #             stack.pop()
-    #             if stack:
-    #                 w, _ = stack[-1]
-    #                 self._low_links[w] = min(self._low_links[w], self._low_links[v])
+                if neighbor not in self._indices:
+                    stack.append((neighbor, 0))
+                elif neighbor in self._on_stack:
+                    self._low_links[v] = min(self._low_links[v], self._indices[neighbor])
+            else:
+                if self._low_links[v] == self._indices[v]:
+                    scc = set()
+                    while True:
+                        w = self._stack.pop()
+                        self._on_stack.remove(w)
+                        scc.add(w)
+                        if w == v:
+                            break
+                    self._sccs.append(scc)
+                stack.pop()
+                if stack:
+                    w, _ = stack[-1]
+                    self._low_links[w] = min(self._low_links[w], self._low_links[v])
 
-    # def find_strongly_connected_components(self) -> List[Set[str]]:
-    #     """
-    #     Finds and returns all strongly connected components
-    #     """
-    #     self._index = 0
-    #     self._stack = []
-    #     self._indices = {}
-    #     self._low_links = {}
-    #     self._on_stack = set()
-    #     self._sccs = []
+    def find_strongly_connected_components(self) -> List[Set[str]]:
+        """
+        Finds and returns all strongly connected components
+        """
+        self._index = 0
+        self._stack = []
+        self._indices = {}
+        self._low_links = {}
+        self._on_stack = set()
+        self._sccs = []
 
-    #     for vertex in self._graph:
-    #         if vertex not in self._indices:
-    #             self._strong_connect(vertex)
+        for vertex in self._graph:
+            if vertex not in self._indices:
+                self._strong_connect(vertex)
 
-    #     return self._sccs
+        return self._sccs
 
-    # def largest_strongly_connected_component(self) -> int:
-    #     """
-    #     Returns the size of the largest strongly connected component
-    #     """
-    #     sccs = self.find_strongly_connected_components()
-    #     return max(len(scc) for scc in sccs) if sccs else 0
+    def largest_strongly_connected_component(self) -> int:
+        """
+        Returns the size of the largest strongly connected component
+        """
+        sccs = self.find_strongly_connected_components()
+        return max(len(scc) for scc in sccs) if sccs else 0
 
-    # def number_of_strongly_connected_components(self) -> int:
-    #     """
-    #     Returns the number of strongly connected components
-    #     """
-    #     sccs = self.find_strongly_connected_components()
-    #     return len(sccs)
+    def number_of_strongly_connected_components(self) -> int:
+        """
+        Returns the number of strongly connected components
+        """
+        sccs = self.find_strongly_connected_components()
+        return len(sccs)
     
-    # def make_udirected_graph_of_scc(self, scc: Set[str]) -> 'Graph':
-    #     """
-    #     Creates an undirected graph of the strongly connected component
-    #     """
-    #     undirected_graph = Graph()
-    #     for vertex in scc:
-    #         undirected_graph.add_vertex(vertex, self._graph[vertex]['data'])
-    #     for vertex in scc:
-    #         for neighbor in self._graph[vertex]['neighbors']:
-    #             if neighbor in scc:
-    #                 undirected_graph.add_edge(vertex, neighbor)
-    #     return undirected_graph
+    def make_udirected_graph_of_scc(self, scc: Set[str]) -> 'Graph':
+        """
+        Creates an undirected graph of the strongly connected component
+        """
+        undirected_graph = Graph()
+        for vertex in scc:
+            undirected_graph.add_vertex(vertex, self._graph[vertex]['data'])
+        for vertex in scc:
+            for neighbor in self._graph[vertex]['neighbors']:
+                if neighbor in scc:
+                    undirected_graph.add_edge(vertex, neighbor)
+        return undirected_graph
     
-    # def dfs_find_cycles_in_scc(self, start_vertex: str) -> List[List[str]]:
-    #     """
-    #     Perform DFS from the start vertex to find all cycles including this vertex.
-    #     :param start_vertex: The start vertex for the DFS
-    #     :param scc: The strongly connected component
-    #     :return: List of cycles found
-    #     """
-    #     stack = [(start_vertex, [start_vertex])]
-    #     cycles = []
+    def dfs_find_cycles_in_scc(self, start_vertex: str) -> List[List[str]]:
+        """
+        Perform DFS from the start vertex to find all cycles including this vertex.
+        :param start_vertex: The start vertex for the DFS
+        :param scc: The strongly connected component
+        :return: List of cycles found
+        """
+        stack = [(start_vertex, [start_vertex])]
+        cycles = []
 
-    #     while stack:
-    #         (vertex, path) = stack.pop()
-    #         for neighbor in self.get_neighbors(vertex):
-    #             if neighbor == start_vertex and len(path) > 2:
-    #                 cycles.append(path)
-    #             elif neighbor not in path:
-    #                 stack.append((neighbor, path + [neighbor]))
+        while stack:
+            (vertex, path) = stack.pop()
+            for neighbor in self.get_neighbors(vertex):
+                if neighbor == start_vertex and len(path) > 2:
+                    cycles.append(path)
+                elif neighbor not in path:
+                    stack.append((neighbor, path + [neighbor]))
         
-    #     return cycles
+        return cycles
     
-    # def check_cycle(self, cycle: List[str]) -> bool:
-    #     """
-    #     Check if a cycle is valid
-    #     """
-    #     for i in range(len(cycle)):
-    #         if not self.edge_exists(cycle[i], cycle[(i + 1) % len(cycle)]):
-    #             return False
+    def check_cycle(self, cycle: List[str]) -> bool:
+        """
+        Check if a cycle is valid
+        """
+        for i in range(len(cycle)):
+            if not self.edge_exists(cycle[i], cycle[(i + 1) % len(cycle)]):
+                return False
     
-    # def max_scc_cycle(self) -> Tuple[int, List[str]]:
-    #     """
-    #     Estimate the circumference of the graph by finding the largest cycle in the largest strongly connected component
-    #     """
-    #     sccs = self.find_strongly_connected_components()
-    #     if not sccs:
-    #         return 0
+    def max_scc_cycle(self) -> Tuple[int, List[str]]:
+        """
+        Estimate the circumference of the graph by finding the largest cycle in the largest strongly connected component
+        """
+        sccs = self.find_strongly_connected_components()
+        if not sccs:
+            return 0
         
-    #     sccs = sorted(sccs, key=len, reverse=True)
+        sccs = sorted(sccs, key=len, reverse=True)
 
-    #     max_cycle_length = 0
-    #     max_cycle = []
+        max_cycle_length = 0
+        max_cycle = []
         
-    #     while len(sccs) > 0:
+        while len(sccs) > 0:
         
-    #         largest_scc = sccs.pop(0)
-    #         undirected_graph = self.make_udirected_graph_of_scc(largest_scc)
+            largest_scc = sccs.pop(0)
+            undirected_graph = self.make_udirected_graph_of_scc(largest_scc)
 
-    #         cycles = undirected_graph.dfs_find_cycles_in_scc(start_vertex=random.choice(list(largest_scc)))
+            cycles = undirected_graph.dfs_find_cycles_in_scc(start_vertex=random.choice(list(largest_scc)))
 
-    #         for cycle in cycles:
-    #             if self.check_cycle(cycle):
-    #                 max_cycle_length = max(max_cycle_length, len(cycle))
-    #                 max_cycle = max(max_cycle, cycle, key=len)
+            for cycle in cycles:
+                if self.check_cycle(cycle):
+                    max_cycle_length = max(max_cycle_length, len(cycle))
+                    max_cycle = max(max_cycle, cycle, key=len)
 
-    #         #remove the scc that have less vertices than the current max_cycle_length
-    #         sccs = [scc for scc in sccs if len(scc) >= max_cycle_length]
+            #remove the scc that have less vertices than the current max_cycle_length
+            sccs = [scc for scc in sccs if len(scc) >= max_cycle_length]
 
-    #     return max_cycle_length, max_cycle
+        return max_cycle_length, max_cycle
     
     def average_clustering_coefficient_undirected(self) -> float:
         """
@@ -643,7 +643,7 @@ class Graph:
 
 page_graph = Graph()
 
-with open('tp_4\web-Google.txt', 'r') as file:
+with open('web-Google.txt', 'r') as file:
     for l in file:
         if "# FromNodeId	ToNodeId" in l:
             break
@@ -657,8 +657,8 @@ with open('tp_4\web-Google.txt', 'r') as file:
         page_graph.add_edge(str(edge[0]), str(edge[1]))
 
 
-# # Calcular y mostrar los resultados
-# #Tamaño de la muestra para la estimación
+# Calcular y mostrar los resultados
+#Tamaño de la muestra para la estimación
 sample_size = 100
 num_vertices = 875713
 
@@ -670,6 +670,9 @@ num_wcc = page_graph.number_of_weakly_connected_components()
 print("Tamaño de la componente conexa más grande:", largest_wcc_size)
 print("Número total de componentes conexas:", num_wcc)
 
+
+# Tamaño de la componente conexa más grande: 855802
+# Número total de componentes conexas: 2746
 
 # 2)
 
@@ -686,6 +689,9 @@ estimated_time_formatted = "{} hours, {} minutes, {} seconds".format(int(hours),
 print(f'Tiempo tardado en calcular para 100 nodos: {time_taken}')
 print("Tiempo estimado para calcular todos los caminos más cortos:", estimated_time_formatted)
 
+# Tiempo tardado en calcular para 100 nodos: 151.4285671710968
+# Tiempo estimado para calcular todos los caminos más cortos: 368 hours, 21 minutes, 19 seconds
+
 
 # 3)
 
@@ -701,6 +707,11 @@ end = time.time()
 print("Número de triángulos cycle en el grafo:", num_triangles_cycle)
 print("Tiempo de ejecución:", end - start, "segundos")
 
+
+# Número total de triángulos en el grafo: 13391903
+# Tiempo de ejecución: 155.53093600273132 segundos
+# Número de triángulos cycle en el grafo: 3889771
+# Tiempo de ejecución: 10.816375970840454 segundos
 
 # 4)
 
@@ -719,6 +730,11 @@ print("Diámetro estimado del grafo (directed):", diameter)
 print("Tiempo de ejecución:", end - start, "segundos")
 
 
+# Diámetro estimado del grafo (undirected): 24
+# Tiempo de ejecución: 362.41296768188477 segundos
+# Diámetro estimado del grafo (directed): 35
+# Tiempo de ejecución: 76.2706651687622 segundos
+
 # 5)
 
 start = time.time()
@@ -729,6 +745,19 @@ print("Tiempo de ejecución:", end - start, "segundos")
 for node, rank in top_page:
     print(f"Node: {node}, PageRank: {rank}")
 
+# PageRank:  60%|█████████████████████████████████████████████████████████████████████                                              | 60/100 [01:58<01:19,  1.98s/iteration]Converged after 61 iterations
+# PageRank:  60%|█████████████████████████████████████████████████████████████████████                                              | 60/100 [02:00<01:20,  2.00s/iteration]
+# Tiempo de ejecución: 127.93787884712219 segundos
+# Node: 597621, PageRank: 0.0006443566959227983
+# Node: 41909, PageRank: 0.000642547725919498
+# Node: 163075, PageRank: 0.0006305999296145597
+# Node: 537039, PageRank: 0.0006269920957719318
+# Node: 384666, PageRank: 0.0005489075674667311
+# Node: 504140, PageRank: 0.0005337169643811826
+# Node: 486980, PageRank: 0.000505691235960779
+# Node: 605856, PageRank: 0.0005008187260454452
+# Node: 32163, PageRank: 0.000497063960554606
+# Node: 558791, PageRank: 0.0004947016864041537
 
 # 6)
 
@@ -740,37 +769,49 @@ print("Tiempo de ejecución:", end - start, "segundos")
 
 
 
+# Circunferencia estimada del grafo: 331
+# Tiempo de ejecución: 178.34379649162292 segundos
+
 # PUNTOS EXTRA
 
 
 # 1)
 
-# sides_range = range(3, 5) 
+sides_range = range(3, 5) 
 
-# # Cantidad de iteraciones para estimar el número de polígonos. A mayor cantidad, más precisa la estimación, pero a la vez tarda más tiempo.
-# tries_range = [20, 10]  
+# Cantidad de iteraciones para estimar el número de polígonos. A mayor cantidad, más precisa la estimación, pero a la vez tarda más tiempo.
+tries_range = [20, 10]  
 
-# page_graph.plot_polygons(sides_range, tries_range)
+page_graph.plot_polygons(sides_range, tries_range)
 
 
 # 2)
 
-# start = time.time()
-# avarage_clustering_coefficient = page_graph.average_clustering_coefficient_undirected()
-# end = time.time()
-# print("Coeficiente de clustering promedio (undirected):", avarage_clustering_coefficient)
-# print("Tiempo de ejecución:", end - start, "segundos")
+start = time.time()
+avarage_clustering_coefficient = page_graph.average_clustering_coefficient_undirected()
+end = time.time()
+print("Coeficiente de clustering promedio (undirected):", avarage_clustering_coefficient)
+print("Tiempo de ejecución:", end - start, "segundos")
 
-# start = time.time()
-# avarage_clustering_coefficient = page_graph.average_clustering_coefficient_directed()
-# end = time.time()
-# print("Coeficiente de clustering promedio (directed):", avarage_clustering_coefficient)
-# print("Tiempo de ejecución:", end - start, "segundos")
+start = time.time()
+avarage_clustering_coefficient = page_graph.average_clustering_coefficient_directed()
+end = time.time()
+print("Coeficiente de clustering promedio (directed):", avarage_clustering_coefficient)
+print("Tiempo de ejecución:", end - start, "segundos")
+
+# Coeficiente de clustering promedio (undirected): 0.5142961475354184
+# Tiempo de ejecución: 113.86298322677612 segundos
+# Coeficiente de clustering promedio (directed): 0.365133010406906
+# Tiempo de ejecución: 11.825618267059326 segundos
 
 # 3)
 
-# start = time.time()
-# max_vertex = page_graph.estimate_betweenness_centrality(samples=sample_size)
-# end = time.time()
-# print("Nodo con mayor centralidad de intermediación:", max_vertex)
-# print("Tiempo de ejecución:", end - start, "segundos")
+start = time.time()
+max_vertex = page_graph.estimate_betweenness_centrality(samples=sample_size)
+end = time.time()
+print("Nodo con mayor centralidad de intermediación:", max_vertex)
+print("Tiempo de ejecución:", end - start, "segundos")
+
+# Nodo con mayor centralidad de intermediación: 560622
+# Tiempo de ejecución: 363.6023666858673 segundos
+

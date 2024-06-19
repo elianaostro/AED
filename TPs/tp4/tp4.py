@@ -67,8 +67,6 @@ def ej1():
     largest_component = max(components, key=len)
     print(f"Size of the largest connected component: {len(largest_component)}")
 
-
-# %% ej 2
 def estimacion_caminos_minimos(graph, cantidad_de_muestras):
     start_time = time.time()
     for i in tqdm(range(cantidad_de_muestras),total=cantidad_de_muestras):
@@ -84,8 +82,6 @@ def estimacion_caminos_minimos(graph, cantidad_de_muestras):
 def ej2():
     print("Podemos obtener todos los caminos minimos en aprox:" ,estimacion_caminos_minimos(page_graph, 100))
 
-
-# %% ej 3
 def contar_triangulos(graph):
     start_time = time.time()
     count = 0
@@ -98,7 +94,6 @@ def contar_triangulos(graph):
 def ej3():
     print("La cantidad de triangulos es:",contar_triangulos(page_graph))
 
-# %% ej 4
 def diametro_estimacion(graph, cantidad_de_muestras):
     start_time = time.time()
     max_distance = 0
@@ -120,7 +115,6 @@ def diametro_estimacion(graph, cantidad_de_muestras):
 def ej4():
     print("El diametro es:",diametro_estimacion(page_graph, 100))
 
-#%%
 def pagerank(graph, iterations, damping_factor):
     start_time = time.time()
     n = len(graph.get_vertexes())
@@ -139,9 +133,90 @@ def ej5():
     ranks = pagerank(page_graph, 100, 0.85)
     print("PageRank:", ranks)
 
-#%%
-def circunferencia(graph):
-    
+def circunferencia_estimacion(graph, cantidad_de_muestras):
+    start_time = time.time()
+    max_distance = 0
+    for _ in tqdm(range(cantidad_de_muestras),total=cantidad_de_muestras):
+        v1 = random.choice(list(graph.get_vertexes()))
+        distances = {v1: 0}
+        queue = deque([v1])
+        while queue:
+            vertex = queue.popleft()
+            for neighbor in graph.get_neighbors(vertex):
+                if neighbor not in distances:
+                    distances[neighbor] = distances[vertex] + 1
+                    max_distance = max(max_distance, distances[neighbor])
+                    queue.append(neighbor)
+    total_time = time.time() - start_time
+    print(f"Execution time: {total_time}")
+    return max_distance
+
+def ej6():
+    print("La circunferencia es:",circunferencia_estimacion(page_graph, 100))
+
+def bfs_until_level(graph, start_vertex, level):
+    visited = set()
+    queue = deque([(start_vertex, 0)])
+    while queue:
+        vertex, current_level = queue.popleft()
+        if vertex not in visited:
+            visited.add(vertex)
+            if current_level < level:
+                queue.extend((neighbor, current_level + 1) for neighbor in graph.get_neighbors(vertex))
+    return visited
+
+def poligonos_k_lados(graph, k):
+    start_time = time.time()
+    count = 0
+    for vertex in tqdm(graph.get_vertexes(),total=len(graph.get_vertexes())):
+        for neighbor in graph.get_neighbors(vertex):
+            for neighbor2 in graph.get_neighbors(neighbor):
+                if vertex in graph.get_neighbors(neighbor2):
+                    count += 1
+    print(f"Execution time: {time.time() - start_time}")
+    return count
+
+def coeficiente_clustering(graph):
+    start_time = time.time()
+    clustering = {}
+    for vertex in tqdm(graph.get_vertexes(),total=len(graph.get_vertexes())):
+        neighbors = graph.get_neighbors(vertex)
+        if len(neighbors) < 2:
+            clustering[vertex] = 0
+        else:
+            triangles = 0
+            for neighbor in neighbors:
+                for neighbor2 in graph.get_neighbors(neighbor):
+                    if vertex in graph.get_neighbors(neighbor2):
+                        triangles += 1
+            clustering[vertex] = triangles / (len(neighbors) * (len(neighbors) - 1))
+    print(f"Execution time: {time.time() - start_time}")
+    return clustering
+
+def betweenness_centrality(graph):
+    start_time = time.time()
+    betweenness = {v: 0 for v in graph.get_vertexes()}
+    for vertex in tqdm(graph.get_vertexes(),total=len(graph.get_vertexes())):
+        for vertex2 in graph.get_vertexes():
+            if vertex != vertex2:
+                paths = 0
+                for neighbor in graph.get_neighbors(vertex):
+                    if vertex2 in bfs_until_level(graph, neighbor, 2):
+                        paths += 1
+                betweenness[vertex] += paths / len(graph.get_vertexes())
+    print(f"Execution time: {time.time() - start_time}")
+    return betweenness
+
+def ej_extra1():
+    print("Cantidad de poligonos de 3 lados:",poligonos_k_lados(page_graph, 3))
+
+def ej_extra2():
+    clustering = coeficiente_clustering(page_graph)
+    print("Coeficiente de clustering:", clustering)
+
+def ej_extra3():
+    betweenness = betweenness_centrality(page_graph)
+    print("Betweenness centrality:", betweenness)
 
 
 #%%
@@ -158,12 +233,13 @@ def main():
     ej5()
     print("6) La circunferencia del grafo es el largo del ciclo más largo. ¿Cuál es la circunferencia del grafo?")
     ej6()
-
+    
     print("Puntos extra:")
     print("1) Programe una función genérica que extendiendo la definición del triángulo calcule la cantidad de polígonos de K lados. Haga un gráfico para mostrar la cantidad de polígonos por cantidad de lados, estimando aquellos que no pueda calcular.")
+    
     print("2) Calcule el coeficiente de clustering del grafo")
     print("3) Utilizando el punto 2, ¿cuál es el vértice con más betweenness centrality?")
-    
+        
 
 if __name__ == "__main__":
     main()
