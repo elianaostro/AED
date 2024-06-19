@@ -1,0 +1,776 @@
+from collections import defaultdict, deque
+import random
+import time
+from typing import Optional, Any, List, Dict, Set, Tuple, Generator
+from tqdm import tqdm
+from multiprocessing import Process, Manager
+import matplotlib.pyplot as plt
+
+class Graph:
+    """
+    Graph class
+    """
+    def __init__(self):
+        self._graph = {}
+        self._index = 0
+        self._stack = []
+        self._indices = {}
+        self._low_links = {}
+        self._on_stack = set()
+        self._sccs = []
+
+    def add_vertex(self, vertex: str, data: Optional[Any]=None) -> None:
+        """
+        Adds a vertex to the graph
+        :param vertex: the vertex name
+        :param data: data associated with the vertex
+        """
+        if vertex not in self._graph:
+            self._graph[vertex] = {'data': data, 'neighbors': {}}
+
+    def add_edge(self, vertex1: str, vertex2: str, data: Optional[Any]=None) -> None:
+        """
+        Adds an edge to the graph
+        :param vertex1: vertex1 key
+        :param vertex2: vertex2 key
+        :param data: the data associated with the vertex
+        """
+        if not vertex1 in self._graph or not vertex2 in self._graph:
+            raise ValueError("The vertices do not exist")
+        self._graph[vertex1]['neighbors'][vertex2] = data
+
+    def get_neighbors(self, vertex: str) -> List[str]:
+        """
+        Get the list of vertex neighbors
+        :param vertex: the vertex to query
+        :return: the list of neighbor vertices
+        """
+        if vertex in self._graph:
+            return list(self._graph[vertex]['neighbors'].keys())
+        else:
+            return []
+
+    def vertex_exists(self, vertex: str) -> bool:
+        """
+        If contains a vertex
+        :param vertex: the vertex name
+        :return: boolean
+        """
+        return vertex in self._graph
+
+    def edge_exists(self, vertex1: str, vertex2: str) -> bool:
+        """
+        If contains an edge
+        :param vertex1: the vertex1 name
+        :param vertex2: the vertex2 name
+        :return: boolean
+        """
+        return vertex1 in self._graph and vertex2 in self._graph[vertex1]['neighbors']
+
+    def connected_components(self, undirected_graph: 'Graph') -> List[List[str]]:
+        connected_components = []
+        is_visited = {vertex: False for vertex in undirected_graph._graph}
+
+        for vertex in undirected_graph._graph:
+            if not is_visited[vertex]:
+                component = self.find_connected_component(vertex, is_visited, undirected_graph)
+                connected_components.append(component)
+
+        return connected_components
+
+    def find_connected_component(self, src: str, is_visited: Dict[str, bool], undirected_graph: 'Graph') -> List[str]:
+        component = []
+        stack = [src]
+
+        while stack:
+            vertex = stack.pop()
+            if not is_visited[vertex]:
+                is_visited[vertex] = True
+                component.append(vertex)
+                for neighbor in undirected_graph.get_neighbors(vertex):
+                    if not is_visited[neighbor]:
+                        stack.append(neighbor)
+
+        return component
+    
+    def weakly_connected_components(self) -> List[List[str]]:
+        undirected_graph = self.make_copy_graph_undirected()
+
+        return self.connected_components(undirected_graph)
+    
+    def largest_weakly_connected_component(self) -> int:
+        components = self.weakly_connected_components()
+        return max(len(component) for component in components) if components else 0
+    
+    def number_of_weakly_connected_components(self) -> int:
+        components = self.weakly_connected_components()
+        return len(components)
+
+    def bfs(self, start: str) -> Tuple[Dict[str, str], Dict[str, int]]:
+        """
+        Perform BFS and return parent and distance dictionaries
+        :param start: The start vertex
+        :return: parent and distance dictionaries
+        """
+        par = {v: None for v in self._graph}
+        dist = {v: float('inf') for v in self._graph}
+        
+        q = deque([start])
+        dist[start] = 0
+        
+        while q:
+            node = q.popleft()
+            for neighbor in self.get_neighbors(node):
+                if dist[neighbor] == float('inf'):
+                    par[neighbor] = node
+                    dist[neighbor] = dist[node] + 1
+                    q.append(neighbor)
+                    
+        return par, dist
+
+    def print_shortest_path(self, start: str, end: str) -> None:
+        """
+        Print the shortest path from start to end
+        :param start: The start vertex
+        :param end: The end vertex
+        """
+        if not self.vertex_exists(start) or not self.vertex_exists(end):
+            print("One or both vertices not found in the graph")
+            return
+        
+        par, dist = self.bfs(start)
+        
+        if dist[end] == float('inf'):
+            print("Source and Destination are not connected")
+            return
+        
+        path = []
+        current_node = end
+        while current_node is not None:
+            path.append(current_node)
+            current_node = par[current_node]
+        
+        path.reverse()
+        print(" -> ".join(path))
+
+    def estimate_shortest_paths(self, samples: int) -> float:
+        vertices = list(self._graph.keys())
+        sampled_vertices = random.sample(vertices, samples)
+
+        start_time = time.time()
+        for vertex in sampled_vertices:
+            self.bfs(vertex)
+        end_time = time.time()
+
+        return end_time - start_time
+    
+    def estimate_diameter(self, samples: int) -> float:
+        """
+        Estimate the diameter of the graph by sampling a subset of vertices and performing BFS
+        from each sampled vertex to find the maximum distance to any other vertex.
+        :param samples: The number of vertices to sample
+        :return: An estimate of the diameter of the graph
+        """
+        vertices = list(self._graph.keys())
+
+        max_distance = 0
+
+        for _ in range(samples): # takes into account not analyzing only one connected component
+        
+            vertex = random.choice(vertices)
+
+            for _ in range(samples):
+                _, dist = self.bfs(vertex)
+                
+                dist = {k: v for k, v in dist.items() if v < float('inf')}
+
+                #get the maximum distance and the vertex that has it
+                max_dist = max(dist.values())
+
+                max_vertex = max(dist, key=dist.get)
+
+                # print(f"Vertex: {vertex}, Max Distance: {max_dist}, Max Vertex: {max_vertex}")
+
+                #if the maximum distance is greater than the current maximum distance, update it
+                if max_dist > max_distance:
+                    max_distance = max_dist
+                
+                vertex = max_vertex
+
+        return max_distance
+
+
+    def page_rank(self, damping_factor: float = 0.85, max_iterations: int = 100, tol: float = 1.0e-6) -> Dict[str, float]:
+        """
+        Computes PageRank for each vertex in the graph.
+        :param graph: the graph
+        :param damping_factor: the damping factor (default 0.85)
+        :param max_iterations: maximum number of iterations (default 100)
+        :param tol: tolerance for convergence (default 1.0e-6)
+        :return: a dictionary of vertex PageRank values
+        """
+        vertices = list(self._graph.keys())
+        num_vertices = len(vertices)
+        if num_vertices == 0:
+            return {}
+
+        # Initialize PageRank values
+        page_rank_values = {vertex: 1.0 / num_vertices for vertex in vertices}
+
+        #create L dictionary
+        L = {vertex: len(self.get_neighbors(vertex)) for vertex in vertices}
+
+        #create dict of vertices that reference the current vertex
+        # R = {vertex: [v for v in vertices if self.edge_exists(v, vertex)] for vertex in vertices}
+
+        transposed_graph = self.transpose()
+
+        R = {vertex: list(transposed_graph.get_neighbors(vertex)) for vertex in transposed_graph._graph}
+
+        for iteration in tqdm(range(max_iterations), desc="PageRank", unit="iteration"):
+            new_page_rank_values = {}
+            for vertex in vertices:
+                rank_sum = 0.0
+                for v in R[vertex]:
+                    rank_sum += page_rank_values[v] / L[v]
+                new_page_rank_values[vertex] = (1 - damping_factor) / num_vertices + damping_factor * rank_sum
+
+            # Check for convergence
+            diff = sum(abs(new_page_rank_values[vertex] - page_rank_values[vertex]) for vertex in vertices)
+            if diff < tol:
+                print(f"Converged after {iteration + 1} iterations")
+                break
+
+            page_rank_values = new_page_rank_values
+
+        return page_rank_values
+
+    
+    def transpose(self) -> 'Graph':
+        """
+        Returns the transpose of the graph
+        :return: A new Graph object that is the transpose of the current graph
+        """
+        transposed = Graph()
+        for vertex in self._graph:
+            transposed.add_vertex(vertex, self._graph[vertex]['data'])
+        for vertex in self._graph:
+            for neighbor in self._graph[vertex]['neighbors']:
+                transposed.add_edge(neighbor, vertex, self._graph[vertex]['neighbors'][neighbor])
+        return transposed
+
+    def count_and_list_cycle_triangles(self) -> Tuple[int, List[Tuple[str, str, str]]]:
+        """
+        Counts and optionally lists the cycle triangles in the graph.
+        :return: A tuple containing the number of cycle triangles and the list of triangles
+        """
+        GT = self.transpose()
+        c = 0
+        triangles = []
+
+        for u in self._graph:
+            for v in self.get_neighbors(u):
+                if u < v:
+                    S = set(GT.get_neighbors(u)).intersection(self.get_neighbors(v))
+                    for w in S:
+                        if u < w:
+                            triangles.append((u, v, w))
+                            c += 1
+                            
+        return c, triangles
+
+    def make_copy_graph_undirected(self):
+        """
+        Makes a copy of the graph as an undirected graph
+        """
+        undirected_graph = Graph()
+        for vertex in self._graph:
+            undirected_graph.add_vertex(vertex, self._graph[vertex]['data'])
+        for vertex in self._graph:
+            for neighbor in self._graph[vertex]['neighbors']:
+                undirected_graph.add_edge(vertex, neighbor)
+                undirected_graph.add_edge(neighbor, vertex)
+        return undirected_graph
+    
+    def count_triangles(self) -> int:
+        """
+        Counts the number of triangles in the graph
+        """
+        undirected_graph = self.make_copy_graph_undirected()
+        count = 0
+        for vertex in self._graph:
+            neighbors = undirected_graph.get_neighbors(vertex)
+            for i in range(len(neighbors)):
+                for j in range(i + 1, len(neighbors)):
+                    if undirected_graph.edge_exists(neighbors[i], neighbors[j]):
+                        count += 1
+        return count // 3           
+
+    def has_k_cycle_util(self, v: str, visited: set, recStack: dict, k: int):
+        stack = [(v, [v])]
+        while stack:
+            (node, path) = stack.pop()
+            if node not in visited:
+                visited.add(node)
+                recStack[node] = path
+                for neighbour in self.get_neighbors(node):
+                    if neighbour not in visited:
+                        stack.append((neighbour, path + [neighbour]))
+                    elif neighbour in recStack and neighbour in path:
+                        cycle_path = path
+                        if len(cycle_path) - cycle_path.index(neighbour) == k:
+                            return cycle_path[cycle_path.index(neighbour):]
+            elif node in recStack and node in path:
+                if len(path) - path.index(node) == k:
+                    return path[path.index(node):]
+                else:
+                    return []
+        return []
+
+    def has_k_cycle(self, k=3, timeout=10):
+        recStack = {}
+        start = time.time()
+        for node in tqdm(self._graph, desc="Checking for cycles of length " + str(k)):
+            if time.time() - start > timeout:
+                break
+            visited = set()  # reset visited set for each node
+            cycle = self.has_k_cycle_util(node, visited, recStack, k=k)
+            if cycle:
+                return cycle
+        return []
+
+    def worker(self, k):
+        cycle = self.has_k_cycle(k)
+        if cycle:
+            return len(cycle)
+        return 0
+
+    def circumference(self):
+        vertices = list(self._graph.keys())
+        circumference = [0]
+    
+        def binary_search_time(low, high):
+            if low > high:
+                return
+            mid = (low + high) // 2
+            cycle_length = self.worker(mid)
+            circumference[0] = max(circumference[0], cycle_length)
+            if cycle_length == mid:
+                binary_search_time(mid + 1, high)
+            else:
+                binary_search_time(low, mid - 1)
+    
+        binary_search_time(2, len(vertices))
+        return circumference[0]
+    
+    # def _strong_connect(self, vertex: str) -> None:
+    #     """
+    #     Non-recursive helper function for Tarjan's algorithm to find strongly connected components
+    #     """
+    #     stack = [(vertex, 0)]
+    #     visited = set()
+        
+    #     while stack:
+    #         v, index = stack[-1]
+            
+    #         if v not in visited:
+    #             visited.add(v)
+    #             self._indices[v] = self._index
+    #             self._low_links[v] = self._index
+    #             self._index += 1
+    #             self._stack.append(v)
+    #             self._on_stack.add(v)
+            
+    #         neighbors = self.get_neighbors(v)
+            
+    #         if index < len(neighbors):
+    #             neighbor = neighbors[index]
+    #             stack[-1] = (v, index + 1)
+                
+    #             if neighbor not in self._indices:
+    #                 stack.append((neighbor, 0))
+    #             elif neighbor in self._on_stack:
+    #                 self._low_links[v] = min(self._low_links[v], self._indices[neighbor])
+    #         else:
+    #             if self._low_links[v] == self._indices[v]:
+    #                 scc = set()
+    #                 while True:
+    #                     w = self._stack.pop()
+    #                     self._on_stack.remove(w)
+    #                     scc.add(w)
+    #                     if w == v:
+    #                         break
+    #                 self._sccs.append(scc)
+    #             stack.pop()
+    #             if stack:
+    #                 w, _ = stack[-1]
+    #                 self._low_links[w] = min(self._low_links[w], self._low_links[v])
+
+    # def find_strongly_connected_components(self) -> List[Set[str]]:
+    #     """
+    #     Finds and returns all strongly connected components
+    #     """
+    #     self._index = 0
+    #     self._stack = []
+    #     self._indices = {}
+    #     self._low_links = {}
+    #     self._on_stack = set()
+    #     self._sccs = []
+
+    #     for vertex in self._graph:
+    #         if vertex not in self._indices:
+    #             self._strong_connect(vertex)
+
+    #     return self._sccs
+
+    # def largest_strongly_connected_component(self) -> int:
+    #     """
+    #     Returns the size of the largest strongly connected component
+    #     """
+    #     sccs = self.find_strongly_connected_components()
+    #     return max(len(scc) for scc in sccs) if sccs else 0
+
+    # def number_of_strongly_connected_components(self) -> int:
+    #     """
+    #     Returns the number of strongly connected components
+    #     """
+    #     sccs = self.find_strongly_connected_components()
+    #     return len(sccs)
+    
+    # def make_udirected_graph_of_scc(self, scc: Set[str]) -> 'Graph':
+    #     """
+    #     Creates an undirected graph of the strongly connected component
+    #     """
+    #     undirected_graph = Graph()
+    #     for vertex in scc:
+    #         undirected_graph.add_vertex(vertex, self._graph[vertex]['data'])
+    #     for vertex in scc:
+    #         for neighbor in self._graph[vertex]['neighbors']:
+    #             if neighbor in scc:
+    #                 undirected_graph.add_edge(vertex, neighbor)
+    #     return undirected_graph
+    
+    # def dfs_find_cycles_in_scc(self, start_vertex: str) -> List[List[str]]:
+    #     """
+    #     Perform DFS from the start vertex to find all cycles including this vertex.
+    #     :param start_vertex: The start vertex for the DFS
+    #     :param scc: The strongly connected component
+    #     :return: List of cycles found
+    #     """
+    #     stack = [(start_vertex, [start_vertex])]
+    #     cycles = []
+
+    #     while stack:
+    #         (vertex, path) = stack.pop()
+    #         for neighbor in self.get_neighbors(vertex):
+    #             if neighbor == start_vertex and len(path) > 2:
+    #                 cycles.append(path)
+    #             elif neighbor not in path:
+    #                 stack.append((neighbor, path + [neighbor]))
+        
+    #     return cycles
+    
+    # def check_cycle(self, cycle: List[str]) -> bool:
+    #     """
+    #     Check if a cycle is valid
+    #     """
+    #     for i in range(len(cycle)):
+    #         if not self.edge_exists(cycle[i], cycle[(i + 1) % len(cycle)]):
+    #             return False
+    
+    # def max_scc_cycle(self) -> Tuple[int, List[str]]:
+    #     """
+    #     Estimate the circumference of the graph by finding the largest cycle in the largest strongly connected component
+    #     """
+    #     sccs = self.find_strongly_connected_components()
+    #     if not sccs:
+    #         return 0
+        
+    #     sccs = sorted(sccs, key=len, reverse=True)
+
+    #     max_cycle_length = 0
+    #     max_cycle = []
+        
+    #     while len(sccs) > 0:
+        
+    #         largest_scc = sccs.pop(0)
+    #         undirected_graph = self.make_udirected_graph_of_scc(largest_scc)
+
+    #         cycles = undirected_graph.dfs_find_cycles_in_scc(start_vertex=random.choice(list(largest_scc)))
+
+    #         for cycle in cycles:
+    #             if self.check_cycle(cycle):
+    #                 max_cycle_length = max(max_cycle_length, len(cycle))
+    #                 max_cycle = max(max_cycle, cycle, key=len)
+
+    #         #remove the scc that have less vertices than the current max_cycle_length
+    #         sccs = [scc for scc in sccs if len(scc) >= max_cycle_length]
+
+    #     return max_cycle_length, max_cycle
+    
+    def average_clustering_coefficient_undirected(self) -> float:
+        """
+        Calculate the average clustering coefficient of the undirected graph
+        """
+        clustering_coefficient = 0
+        undirected_graph = self.make_copy_graph_undirected()
+
+        computed_neighbors = {vertex: set(undirected_graph.get_neighbors(vertex)) for vertex in tqdm(undirected_graph._graph, desc="Compting neighbors", unit="vertex")}
+
+        for vertex in tqdm(undirected_graph._graph, desc="Calculating clustering coefficient", unit="vertex"):
+            neighbors = computed_neighbors[vertex]
+            count = 0
+            for neighbor in neighbors:
+                count += len(set(undirected_graph.get_neighbors(neighbor)).intersection(neighbors))
+            clustering_coefficient += count / (len(neighbors) * (len(neighbors) - 1)) if len(neighbors) > 1 else 0
+        return clustering_coefficient / len(undirected_graph._graph)
+
+    def average_clustering_coefficient_directed(self) -> float:
+        """
+        Calculate the average clustering coefficient of the directed graph
+        """
+        clustering_coefficient = 0
+        computed_neighbors = {vertex: set(self.get_neighbors(vertex)) for vertex in tqdm(self._graph, desc="Compting neighbors", unit="vertex")}
+
+        for vertex in tqdm(self._graph, desc="Calculating clustering coefficient", unit="vertex"):
+            neighbors = computed_neighbors[vertex]
+            count = 0
+            for neighbor in neighbors:
+                count += len(set(self.get_neighbors(neighbor)).intersection(neighbors))
+            clustering_coefficient += count / (len(neighbors) * (len(neighbors) - 1)) if len(neighbors) > 1 else 0
+        return clustering_coefficient / len(self._graph)
+
+
+    def bfs_bc_helper(self, start: str) -> Tuple[Dict[str, int], Dict[str, List[str]]]:
+        """
+        Perform BFS and return the shortest paths and predecessor lists.
+        :param start: The start vertex
+        :return: distance dictionary and predecessor lists
+        """
+        dist = {v: float('inf') for v in self._graph}
+        pred = {v: [] for v in self._graph}
+        
+        dist[start] = 0
+        q = deque([start])
+        
+        while q:
+            node = q.popleft()
+            for neighbor in self.get_neighbors(node):
+                if dist[neighbor] == float('inf'):
+                    dist[neighbor] = dist[node] + 1
+                    q.append(neighbor)
+                if dist[neighbor] == dist[node] + 1:
+                    pred[neighbor].append(node)
+                    
+        return dist, pred
+
+    def estimate_betweenness_centrality(self, samples: int = 10) -> str:
+        """
+        Estimate the vertex with the highest betweenness centrality.
+        :param samples: The number of vertices to sample
+        :return: The vertex with the highest estimated betweenness centrality
+        """
+        vertices = list(self._graph.keys())
+        sampled_vertices = random.sample(vertices, samples)
+        
+        betweenness = defaultdict(float)
+        
+        for vertex in tqdm(sampled_vertices):
+            # Get shortest paths and predecessor lists from the current vertex
+            dist, pred = self.bfs_bc_helper(vertex)
+            
+            # Initialize the dependencies
+            delta = {v: 0 for v in self._graph}
+            
+            # Perform accumulation of dependencies in reverse order
+            stack = [v for v in vertices if dist[v] < float('inf')]
+            stack.sort(key=lambda v: -dist[v])
+            
+            for w in stack:
+                coeff = (1 + delta[w]) / len(pred[w]) if pred[w] else 1
+                for v in pred[w]:
+                    delta[v] += dist[v] / dist[w] * coeff
+                if w != vertex:
+                    betweenness[w] += delta[w]
+        
+        # Find the vertex with the highest betweenness centrality
+        max_vertex = max(betweenness, key=betweenness.get)
+        return max_vertex
+    
+
+    def find_k_cycles(self, start_node, k):
+        """Find all k-cycles starting from a given node."""
+        transposed = self.transpose()
+        stack = [(start_node, [start_node], 1)]
+        k_cycles = []
+
+        while stack:
+            current_node, path, current_depth = stack.pop()
+
+            if current_depth == k:
+                if start_node in set(self.get_neighbors(current_node)) | set(transposed.get_neighbors(current_node)):
+                    k_cycles.append(path)
+            elif current_depth < k:
+                for neighbor in set(self.get_neighbors(current_node)) | set(transposed.get_neighbors(current_node)):
+                    if neighbor not in path:
+                        stack.append((neighbor, path + [neighbor], current_depth + 1))
+
+        return k_cycles
+
+    def estimate_k_cycles(self, k, n):
+        """Estimate the number of k-cycles in the graph by sampling n nodes."""
+        total_k_polygons = 0
+        vertices = list(self._graph.keys())
+        random.shuffle(vertices)
+
+        for i in range(n):
+            start_node = vertices[i]
+            k_cycles = self.find_k_cycles(start_node, k)
+            total_k_polygons += len(k_cycles)
+
+        return total_k_polygons / (2 * k) / n * len(vertices)
+
+    def plot_polygons(self, sides_range, tries_range):
+        polygons_count = [self.estimate_k_cycles(k, tries) for k, tries in tqdm(zip(sides_range, tries_range))]
+
+        plt.bar(sides_range, polygons_count)
+        plt.yscale('log')
+        plt.xlabel('Number of sides')
+        plt.ylabel('Number of polygons')
+        plt.title('Number of polygons by number of sides')
+        plt.show()
+
+
+page_graph = Graph()
+
+with open('tp_4\web-Google.txt', 'r') as file:
+    for l in file:
+        if "# FromNodeId	ToNodeId" in l:
+            break
+    for l in file:
+        if not l:
+            break
+        edge = tuple(int(v.replace("\n", "").replace("\t", "")) for v in l.split("\t"))
+        for v in edge:
+            if not page_graph.vertex_exists(v):
+                page_graph.add_vertex(str(v))
+        page_graph.add_edge(str(edge[0]), str(edge[1]))
+
+
+# # Calcular y mostrar los resultados
+# #Tamaño de la muestra para la estimación
+sample_size = 100
+num_vertices = 875713
+
+# 1)
+
+largest_wcc_size = page_graph.largest_weakly_connected_component()
+num_wcc = page_graph.number_of_weakly_connected_components()
+
+print("Tamaño de la componente conexa más grande:", largest_wcc_size)
+print("Número total de componentes conexas:", num_wcc)
+
+
+# 2)
+
+# Estimate time to calculate all shortest paths
+time_taken = page_graph.estimate_shortest_paths(samples=sample_size)
+
+# Escalar el tiempo al tamaño completo del grafo
+estimated_time = time_taken * (num_vertices / sample_size)  # estimated time in seconds
+
+# Convertir el tiempo a horas, minutos y segundos
+hours, remainder = divmod(estimated_time, 3600)  # there are 3600 seconds in an hour
+minutes, seconds = divmod(remainder, 60)  # there are 60 seconds in a minute
+estimated_time_formatted = "{} hours, {} minutes, {} seconds".format(int(hours), int(minutes), int(seconds))
+print(f'Tiempo tardado en calcular para 100 nodos: {time_taken}')
+print("Tiempo estimado para calcular todos los caminos más cortos:", estimated_time_formatted)
+
+
+# 3)
+
+start = time.time()
+num_triangles = page_graph.count_triangles()
+end = time.time()
+print("Número total de triángulos en el grafo:", num_triangles)
+print("Tiempo de ejecución:", end - start, "segundos")
+
+start = time.time()
+num_triangles_cycle, triangles = page_graph.count_and_list_cycle_triangles()
+end = time.time()
+print("Número de triángulos cycle en el grafo:", num_triangles_cycle)
+print("Tiempo de ejecución:", end - start, "segundos")
+
+
+# 4)
+
+undir = page_graph.make_copy_graph_undirected()
+
+start = time.time()
+diameter = undir.estimate_diameter(samples=10)
+end = time.time()
+print("Diámetro estimado del grafo (undirected):", diameter)
+print("Tiempo de ejecución:", end - start, "segundos")
+
+start = time.time()
+diameter = page_graph.estimate_diameter(samples=10)
+end = time.time()
+print("Diámetro estimado del grafo (directed):", diameter)
+print("Tiempo de ejecución:", end - start, "segundos")
+
+
+# 5)
+
+start = time.time()
+page_rank = page_graph.page_rank()
+top_page = sorted(page_rank.items(), key=lambda x: x[1], reverse=True)[:10]
+end = time.time()
+print("Tiempo de ejecución:", end - start, "segundos")
+for node, rank in top_page:
+    print(f"Node: {node}, PageRank: {rank}")
+
+
+# 6)
+
+start = time.time()
+circumference = page_graph.circumference()
+end = time.time()
+print("Circunferencia estimada del grafo:", circumference)
+print("Tiempo de ejecución:", end - start, "segundos")
+
+
+
+# PUNTOS EXTRA
+
+
+# 1)
+
+# sides_range = range(3, 5) 
+
+# # Cantidad de iteraciones para estimar el número de polígonos. A mayor cantidad, más precisa la estimación, pero a la vez tarda más tiempo.
+# tries_range = [20, 10]  
+
+# page_graph.plot_polygons(sides_range, tries_range)
+
+
+# 2)
+
+# start = time.time()
+# avarage_clustering_coefficient = page_graph.average_clustering_coefficient_undirected()
+# end = time.time()
+# print("Coeficiente de clustering promedio (undirected):", avarage_clustering_coefficient)
+# print("Tiempo de ejecución:", end - start, "segundos")
+
+# start = time.time()
+# avarage_clustering_coefficient = page_graph.average_clustering_coefficient_directed()
+# end = time.time()
+# print("Coeficiente de clustering promedio (directed):", avarage_clustering_coefficient)
+# print("Tiempo de ejecución:", end - start, "segundos")
+
+# 3)
+
+# start = time.time()
+# max_vertex = page_graph.estimate_betweenness_centrality(samples=sample_size)
+# end = time.time()
+# print("Nodo con mayor centralidad de intermediación:", max_vertex)
+# print("Tiempo de ejecución:", end - start, "segundos")

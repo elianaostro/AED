@@ -1,5 +1,6 @@
 from typing import Optional, Any, List
 
+
 class Graph:
     """
     Graph class
@@ -14,7 +15,7 @@ class Graph:
         :param data: data associated with the vertex
         """
         if vertex not in self._graph:
-            self._graph[vertex] = {'data': data, 'neighbors': {}}
+            self._graph[vertex] = {'data': data, 'neighbors': {}, 'from': set()}
 
     def add_edge(self, vertex1: str, vertex2: str, data: Optional[Any]=None) -> None:
         """
@@ -26,6 +27,7 @@ class Graph:
         if not vertex1 in self._graph or not vertex2 in self._graph:
             raise ValueError("The vertexes do not exist")
         self._graph[vertex1]['neighbors'][vertex2] = data
+        self._graph[vertex2]['from'].add(vertex1)
 
     def get_neighbors(self, vertex) -> List[str]:
         """
@@ -86,3 +88,27 @@ class Graph:
         :return: boolean
         """
         return vertex1 in self._graph and vertex2 in self._graph[vertex1]['neighbors']
+
+    def get_vertexes(self) -> set:
+        """
+        Gets the list of vertexes
+        :return: the list of vertexes
+        """
+        return set(self._graph.keys())
+    
+    def get_vertexes_from(self, vertex: str) -> set:
+        """
+        Gets the list of vertexes from a vertex
+        :param vertex: the vertex name
+        :return: the list of vertexes
+        """
+        return self._graph[vertex]['from']
+    
+    def get_degree(self, vertex: str) -> int:
+        """
+        Gets the degree of a vertex
+        :param vertex: the vertex name
+        :return: the degree of the vertex
+        """
+        return len(self._graph[vertex]['neighbors'])
+        
