@@ -1,0 +1,20 @@
+Se buscaron los componentes conexos buscando en profundidad desde cada nodo en una version del grafo no dirigida y se encontro lo siguiente:
+
+Cantidad de componentes conexos: 2746
+Tamaño del componente conexo mas grande: 855802
+
+Se empezaron a buscar todos los caminos minimos, al tardar demasiado tiempo se estimo buscando todos los caminos desde 100 nodos randoms hasta todos los nodos posibles. Desde este valor se calculo el tiempo promedio para encontrar todos los caminos minimos desde un nodo. Y pudimos obtener que tardariamos aproximadamente 12 dias y media en calcular todos los caminos minimos. 
+
+Sabiendo que un grafo un triángulo es una conexión entre 3 vértices A, B y C:
+    A está conectado con B
+    B está conectado con C
+    C está conectado con A
+
+Se calculo que el grafo tiene 11669313 de triangulos. Iterando por cada nodo y buscando en los vecinos si tienen un vecino que apuntan al vertice inicial.
+
+De la misma manera que se estimo los caminos minimos se calculo el diametro del grafo buscando en 100 nodos randoms que tan largo es el camino mas largo y se estima que el diametro es 40
+
+Google inventó un algoritmo llamado PageRank que le permitía saber qué páginas eran más confiables según que tanto eran referenciadas. PageRank consiste en hacer muchos random walks a lo largo del grafo y contar cuántas veces aparece cada vértice. Los vértices que más aparecen son los de mayor PageRank. Calcule el PageRank de los vértices del grafo.
+Para calcular el page rank de cada nodo segun los ranks de su vecinos, tanto de los nodos a los que apuntan como los que apuntan a este. Los nodos mejor rankeados son 597621, 41909 y 163075.
+
+Como se hizo con el diametro se calculo la circunferencia, y se obtuvo un cico de tamaño 38.
