@@ -1,20 +1,49 @@
-Se buscaron los componentes conexos buscando en profundidad desde cada nodo en una version del grafo no dirigida y se encontro lo siguiente:
+Se buscaron los componentes conexos buscando en profundidad desde cada nodo 
+en una versión del grafo no dirigida y se encontró lo siguiente:
 
-Cantidad de componentes conexos: 2746
-Tamaño del componente conexo mas grande: 855802
+Cantidad de componentes conexos: 2746  
+Tamaño del componente conexo más grande: 855802
 
-Se empezaron a buscar todos los caminos minimos, al tardar demasiado tiempo se estimo buscando todos los caminos desde 100 nodos randoms hasta todos los nodos posibles. Desde este valor se calculo el tiempo promedio para encontrar todos los caminos minimos desde un nodo. Y pudimos obtener que tardariamos aproximadamente 12 dias y media en calcular todos los caminos minimos. 
+Se empezaron a buscar todos los caminos mínimos, al tardar demasiado tiempo se estimó buscando 
+todos los caminos desde 100 nodos randoms hasta todos los nodos posibles. Desde este valor se 
+calculó el tiempo promedio para encontrar todos los caminos mínimos desde un nodo. Y pudimos 
+obtener que tardaríamos aproximadamente 12 días y medio en calcular todos los caminos mínimos.
 
-Sabiendo que un grafo un triángulo es una conexión entre 3 vértices A, B y C:
-    A está conectado con B
-    B está conectado con C
-    C está conectado con A
+Sabiendo que en un grafo un triángulo es una conexión entre 3 vértices A, B y C:
+- A está conectado con B
+- B está conectado con C
+- C está conectado con A
 
-Se calculo que el grafo tiene 11669313 de triangulos. Iterando por cada nodo y buscando en los vecinos si tienen un vecino que apuntan al vertice inicial.
+Se calculó que el grafo tiene 11,669,313 triángulos. Iterando por cada nodo y buscando en los 
+vecinos si tienen un vecino que apunta al vértice inicial.
 
-De la misma manera que se estimo los caminos minimos se calculo el diametro del grafo buscando en 100 nodos randoms que tan largo es el camino mas largo y se estima que el diametro es 40
+De la misma manera que se estimaron los caminos mínimos se calculó el diámetro del grafo buscando 
+en 100 nodos randoms qué tan largo es el camino más largo y se estima que el diámetro es 40.
 
-Google inventó un algoritmo llamado PageRank que le permitía saber qué páginas eran más confiables según que tanto eran referenciadas. PageRank consiste en hacer muchos random walks a lo largo del grafo y contar cuántas veces aparece cada vértice. Los vértices que más aparecen son los de mayor PageRank. Calcule el PageRank de los vértices del grafo.
-Para calcular el page rank de cada nodo segun los ranks de su vecinos, tanto de los nodos a los que apuntan como los que apuntan a este. Los nodos mejor rankeados son 597621, 41909 y 163075.
+Google inventó un algoritmo llamado PageRank que le permitía saber qué páginas eran más confiables 
+según qué tanto eran referenciadas. PageRank consiste en hacer muchos random walks a lo largo del 
+grafo y contar cuántas veces aparece cada vértice. Los vértices que más aparecen son los de mayor 
+PageRank. Calcule el PageRank de los vértices del grafo.  
+Para calcular el PageRank de cada nodo se utiliza un algoritmo iterativo que ajusta los ranks de 
+cada nodo según los ranks de sus vecinos, tanto de los nodos a los que apuntan como de los que 
+apuntan a este. Los nodos mejor rankeados son 597621, 41909 y 163075.
 
-Como se hizo con el diametro se calculo la circunferencia, y se obtuvo un cico de tamaño 38.
+Para encontrar el tamaño máximo del ciclo, se utilizó una búsqueda binaria para determinar la 
+presencia de ciclos de diferentes tamaños, verificando si existen mediante búsquedas limitadas 
+en profundidad. Se obtuvo un ciclo de tamaño 13250, como cota inferior porque se freno el codigo. 
+Puede ser que exita un ciclo mas grande.
+
+Se implementaron métodos para estimar y graficar la tasa de crecimiento del número de polígonos en 
+el grafo. Para ello, se calculó la tasa de crecimiento del número de polígonos con lados de 3 a 10. 
+Para cada valor de k, se seleccionó un subconjunto de vértices y se calculó la cantidad de polígonos 
+con k lados que incluyen cada vértice del subconjunto. Esto se realizó haciendo una búsqueda en 
+profundidad (DFS) desde el vértice de inicio, almacenando las rutas. Cuando la ruta tiene k-1 nodos, 
+se cuenta cuántos vecinos del nodo actual se conectan al vértice de inicio, formando así un polígono 
+de k lados. En el gráfico pudimos ver que la cantidad de polígonos crece a un ritmo que parece exponencial.
+
+El coeficiente de clustering se calculó promediando los coeficientes de clustering locales de todos los nodos, 
+que miden la densidad de conexiones entre los vecinos de cada nodo. Coeficiente de clustering obtenido fue 0.35786272165105826. 
+
+La centralidad de intermediación (betweenness centrality) se calculó utilizando el algoritmo de Brandes, que 
+es eficiente para grafos grandes. Este algoritmo calcula cuántos caminos mínimos pasan a través de cada nodo, 
+indicando así su importancia en el flujo de información a través del grafo.

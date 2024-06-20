@@ -657,6 +657,50 @@ with open('web-Google.txt', 'r') as file:
         page_graph.add_edge(str(edge[0]), str(edge[1]))
 
 
+
+# PUNTOS EXTRA
+
+
+# 1)
+
+sides_range = range(3, 5) 
+
+# Cantidad de iteraciones para estimar el número de polígonos. A mayor cantidad, más precisa la estimación, pero a la vez tarda más tiempo.
+tries_range = [20, 10]  
+
+page_graph.plot_polygons(sides_range, tries_range)
+
+
+# 2)
+
+start = time.time()
+avarage_clustering_coefficient = page_graph.average_clustering_coefficient_undirected()
+end = time.time()
+print("Coeficiente de clustering promedio (undirected):", avarage_clustering_coefficient)
+print("Tiempo de ejecución:", end - start, "segundos")
+
+start = time.time()
+avarage_clustering_coefficient = page_graph.average_clustering_coefficient_directed()
+end = time.time()
+print("Coeficiente de clustering promedio (directed):", avarage_clustering_coefficient)
+print("Tiempo de ejecución:", end - start, "segundos")
+
+# Coeficiente de clustering promedio (undirected): 0.5142961475354184
+# Tiempo de ejecución: 113.86298322677612 segundos
+# Coeficiente de clustering promedio (directed): 0.365133010406906
+# Tiempo de ejecución: 11.825618267059326 segundos
+
+# 3)
+
+start = time.time()
+max_vertex = page_graph.estimate_betweenness_centrality(samples=sample_size)
+end = time.time()
+print("Nodo con mayor centralidad de intermediación:", max_vertex)
+print("Tiempo de ejecución:", end - start, "segundos")
+
+# Nodo con mayor centralidad de intermediación: 560622
+# Tiempo de ejecución: 363.6023666858673 segundos
+
 # Calcular y mostrar los resultados
 #Tamaño de la muestra para la estimación
 sample_size = 100
@@ -771,47 +815,3 @@ print("Tiempo de ejecución:", end - start, "segundos")
 
 # Circunferencia estimada del grafo: 331
 # Tiempo de ejecución: 178.34379649162292 segundos
-
-# PUNTOS EXTRA
-
-
-# 1)
-
-sides_range = range(3, 5) 
-
-# Cantidad de iteraciones para estimar el número de polígonos. A mayor cantidad, más precisa la estimación, pero a la vez tarda más tiempo.
-tries_range = [20, 10]  
-
-page_graph.plot_polygons(sides_range, tries_range)
-
-
-# 2)
-
-start = time.time()
-avarage_clustering_coefficient = page_graph.average_clustering_coefficient_undirected()
-end = time.time()
-print("Coeficiente de clustering promedio (undirected):", avarage_clustering_coefficient)
-print("Tiempo de ejecución:", end - start, "segundos")
-
-start = time.time()
-avarage_clustering_coefficient = page_graph.average_clustering_coefficient_directed()
-end = time.time()
-print("Coeficiente de clustering promedio (directed):", avarage_clustering_coefficient)
-print("Tiempo de ejecución:", end - start, "segundos")
-
-# Coeficiente de clustering promedio (undirected): 0.5142961475354184
-# Tiempo de ejecución: 113.86298322677612 segundos
-# Coeficiente de clustering promedio (directed): 0.365133010406906
-# Tiempo de ejecución: 11.825618267059326 segundos
-
-# 3)
-
-start = time.time()
-max_vertex = page_graph.estimate_betweenness_centrality(samples=sample_size)
-end = time.time()
-print("Nodo con mayor centralidad de intermediación:", max_vertex)
-print("Tiempo de ejecución:", end - start, "segundos")
-
-# Nodo con mayor centralidad de intermediación: 560622
-# Tiempo de ejecución: 363.6023666858673 segundos
-
