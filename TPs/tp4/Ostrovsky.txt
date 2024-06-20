@@ -7,7 +7,10 @@ Tamaño del componente conexo más grande: 855802
 Se empezaron a buscar todos los caminos mínimos, al tardar demasiado tiempo se estimó buscando 
 todos los caminos desde 100 nodos randoms hasta todos los nodos posibles. Desde este valor se 
 calculó el tiempo promedio para encontrar todos los caminos mínimos desde un nodo. Y pudimos 
-obtener que tardaríamos aproximadamente 12 días y medio en calcular todos los caminos mínimos.
+obtener que tardaríamos aproximadamente 11 días en calcular todos los caminos mínimos.
+
+Tiempo tardado en obtener todos los caminos minimos desde 100 nodos: 105.86944222450256 segundos
+Podemos obtener todos los caminos minimos en aprox: 10 dias y 17:31:52
 
 Sabiendo que en un grafo un triángulo es una conexión entre 3 vértices A, B y C:
 - A está conectado con B
@@ -28,6 +31,17 @@ Para calcular el PageRank de cada nodo se utiliza un algoritmo iterativo que aju
 cada nodo según los ranks de sus vecinos, tanto de los nodos a los que apuntan como de los que 
 apuntan a este. Los nodos mejor rankeados son 597621, 41909 y 163075.
 
+Node: 597621, PageRank: 0.0006443556238888765
+Node: 41909, PageRank: 0.0006425463534843848
+Node: 163075, PageRank: 0.00063059933489164
+Node: 537039, PageRank: 0.0006269911082288288
+Node: 384666, PageRank: 0.0005489064380190972
+Node: 504140, PageRank: 0.0005337160511396284
+Node: 486980, PageRank: 0.000505690968107807
+Node: 605856, PageRank: 0.0005008184678214074
+Node: 32163, PageRank: 0.0004970632002167654
+Node: 558791, PageRank: 0.0004947013146397534
+
 Para encontrar el tamaño máximo del ciclo, se utilizó una búsqueda binaria para determinar la 
 presencia de ciclos de diferentes tamaños, verificando si existen mediante búsquedas limitadas 
 en profundidad. Se obtuvo un ciclo de tamaño 13250, como cota inferior porque se freno el codigo. 
@@ -46,4 +60,4 @@ que miden la densidad de conexiones entre los vecinos de cada nodo. Coeficiente 
 
 La centralidad de intermediación (betweenness centrality) se calculó utilizando el algoritmo de Brandes, que 
 es eficiente para grafos grandes. Este algoritmo calcula cuántos caminos mínimos pasan a través de cada nodo, 
-indicando así su importancia en el flujo de información a través del grafo.
+indicando así su importancia en el flujo de información a través del grafo. El nodo con mayor betweenness centrality es: 560622.

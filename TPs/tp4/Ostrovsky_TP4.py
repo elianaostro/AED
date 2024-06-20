@@ -1,117 +1,11 @@
-# from graph import Graph
+from graph import Graph
 from tqdm import tqdm
 import numpy as np
 import time
 import random
 from collections import deque, defaultdict
 import matplotlib.pyplot as plt
-
-from typing import Optional, Any, List
-
-class Graph:
-    """
-    Graph class using defaultdict
-    """
-    def __init__(self):
-        self._graph = defaultdict(lambda: {'data': None, 'neighbors': {}, 'from': set()})
-
-    def add_vertex(self, vertex: str, data: Optional[Any]=None) -> None:
-        """
-        Adds a vertex to the graph
-        :param vertex: the vertex name
-        :param data: data associated with the vertex
-        """
-        self._graph[vertex]['data'] = data
-
-    def add_edge(self, vertex1: str, vertex2: str, data: Optional[Any]=None) -> None:
-        """
-        Adds an edge to the graph
-        :param vertex1: vertex1 key
-        :param vertex2: vertex2 key
-        :param data: the data associated with the edge
-        """
-        if not self.vertex_exists(vertex1) or not self.vertex_exists(vertex2):
-            raise ValueError("The vertices do not exist")
-        self._graph[vertex1]['neighbors'][vertex2] = data
-        self._graph[vertex2]['from'].add(vertex1)
-
-    def get_neighbors(self, vertex) -> List[str]:
-        """
-        Get the list of vertex neighbors
-        :param vertex: the vertex to query
-        :return: the list of neighbor vertices
-        """
-        return list(self._graph[vertex]['neighbors'].keys())
-
-    def get_vertex_data(self, vertex: str) -> Optional[Any]:
-        """
-        Gets vertex associated data
-        :param vertex: the vertex name
-        :return: the vertex data
-        """
-        return self._graph[vertex]['data']
-
-    def get_edge_data(self, vertex1: str, vertex2: str) -> Optional[Any]:
-        """
-        Gets the edge data between two vertices
-        :param vertex1: the first vertex name
-        :param vertex2: the second vertex name
-        :return: the edge data
-        """
-        if self.edge_exists(vertex1, vertex2):
-            return self._graph[vertex1]['neighbors'][vertex2]
-        raise ValueError("The edge does not exist")
-
-    def print_graph(self) -> None:
-        """
-        Prints the graph
-        """
-        for vertex, data in self._graph.items():
-            print("Vertex:", vertex)
-            print("Data:", data['data'])
-            print("Neighbors:", data['neighbors'])
-            print("")
-
-    def vertex_exists(self, vertex: str) -> bool:
-        """
-        Checks if a vertex exists in the graph
-        :param vertex: the vertex name
-        :return: boolean indicating existence
-        """
-        return vertex in self._graph
-
-    def edge_exists(self, vertex1: str, vertex2: str) -> bool:
-        """
-        Checks if an edge exists between two vertices
-        :param vertex1: the first vertex name
-        :param vertex2: the second vertex name
-        :return: boolean indicating existence
-        """
-        return vertex1 in self._graph and vertex2 in self._graph[vertex1]['neighbors']
-
-    def get_vertexes(self) -> set:
-        """
-        Gets the set of all vertices in the graph
-        :return: set of vertices
-        """
-        return set(self._graph.keys())
-
-    def get_vertexes_from(self, vertex: str) -> set:
-        """
-        Gets the set of vertices directly connected from a given vertex
-        :param vertex: the vertex name
-        :return: set of vertices
-        """
-        return self._graph[vertex]['from']
-
-    def get_degree(self, vertex: str) -> int:
-        """
-        Gets the degree of a vertex (number of neighbors)
-        :param vertex: the vertex name
-        :return: the degree of the vertex
-        """
-        return len(self._graph[vertex]['neighbors'])
-      
+   
 page_graph = Graph()
 page_graph_bidirectional = Graph()
 
@@ -138,7 +32,7 @@ def bfs(graph, start_vertex):
         vertex = queue.popleft()
         if vertex not in visited:
             visited.add(vertex)
-            queue.extend(set(graph.get_neighbors(vertex)) - visited)
+            queue.extend(graph.get_neighbors(vertex) - visited)
     return visited
 
 def dfs(graph, start_vertex):
@@ -148,7 +42,7 @@ def dfs(graph, start_vertex):
         vertex = stack.pop()
         if vertex not in visited:
             visited.add(vertex)
-            stack.extend(set(graph.get_neighbors(vertex)) - visited)
+            stack.extend(graph.get_neighbors(vertex) - visited)
     return visited
 
 def connected_components(graph):
@@ -176,7 +70,7 @@ def contar_triangulos(graph):
     count = 0
     for vertex in tqdm(graph.get_vertexes(),total=len(graph.get_vertexes())):
         for neighbor in graph.get_neighbors(vertex):
-            count += len(set(graph.get_neighbors(neighbor)) & set(graph.get_vertexes_from(vertex)))
+            count += len(graph.get_neighbors(neighbor) & graph.get_vertexes_from(vertex))
     return count
 
 def diametro_estimacion(graph, cantidad_de_muestras):
@@ -202,20 +96,19 @@ def pagerank(graph, iterations=100, damping_factor=0.85, epsilon=1e-6):
         for vertex in graph.get_vertexes():
             new_ranks[vertex] = (1 - damping_factor) / n
             for neighbor in graph.get_vertexes_from(vertex):
-                new_ranks[vertex] += damping_factor * ranks[neighbor] / len(graph.get_neighbors(neighbor))
+                new_ranks[vertex] += damping_factor * ranks[neighbor] / graph.get_degree(neighbor)
         ranks = new_ranks
         if all(abs(ranks[v] - 1.0 / n) < epsilon for v in graph.get_vertexes()):
             break
     return ranks or {} 
 
-def has_cycle_of_size(graph, size, sample_size=100, max_time=120):
+def has_cycle_of_size(graph, size, sample_size=50, max_time=120):
     start_time = time.time()
     vertices = random.sample(list(graph.get_vertexes()), sample_size)
     for start_vertex in tqdm(vertices, total=sample_size):
         if time.time() - start_time > max_time:
             return False
         stack = deque([(start_vertex, start_vertex, 1)])  # (current_vertex, previous_vertex, count)
-        visited = set([start_vertex])
         while stack:
             current_vertex, previous_vertex, count = stack.pop()
             if count == size:
@@ -223,33 +116,30 @@ def has_cycle_of_size(graph, size, sample_size=100, max_time=120):
                     return True
                 continue
             for neighbor in graph.get_neighbors(current_vertex):
-                if time.time() - start_time > max_time:
+                if time.time - start_time > max_time:
                     return False
                 if neighbor != previous_vertex:
                     if count + 1 == size and start_vertex in graph.get_neighbors(neighbor):
                         return True
-                    if neighbor not in visited:
-                        visited.add(neighbor)
-                        stack.append((neighbor, current_vertex, count + 1))
+                    stack.append((neighbor, current_vertex, count + 1))
     return False
 
 def max_cycle(graph, max_time_per_cycle=120):
     vertices = graph.get_vertexes()
+    num_vertices = len(vertices)
     max_cycle_length = 0
-    start_time = time.time()
     
     def binary_search_time(low, high):
         nonlocal max_cycle_length
-        if low > high:
-            return
-        mid = (low + high) // 2
-        if has_cycle_of_size(graph, mid, max_time=max_time_per_cycle):
-            max_cycle_length = max(max_cycle_length, mid)
-            binary_search_time(mid + 1, high)
-        else:
-            binary_search_time(low, mid - 1)
+        while low <= high:
+            mid = (low + high) // 2
+            if has_cycle_of_size(graph, mid, max_time=max_time_per_cycle):
+                max_cycle_length = mid
+                low = mid + 1
+            else:
+                high = mid - 1
     
-    binary_search_time(2, len(vertices))
+    binary_search_time(2, min(num_vertices, 1000))  # Limitar la búsqueda a un tamaño razonable
     return max_cycle_length
 
 def ej1():
@@ -300,7 +190,7 @@ def aprox_count_polygon_k_sides(graph, start_vertex, k, max_time_per_cycle=120):
         current_vertex, path = stack.pop()
         neighbors = graph.get_neighbors(current_vertex)
         if len(path) == k - 1:
-            count += len(set(neighbors) & set(graph.get_vertexes_from(start_vertex)) - set(path))
+            count += len(neighbors & graph.get_vertexes_from(start_vertex) - set(path))
             continue
         for neighbor in neighbors:
             if neighbor not in path:
@@ -309,35 +199,60 @@ def aprox_count_polygon_k_sides(graph, start_vertex, k, max_time_per_cycle=120):
             break
     return count
 
-def estimate_growth_rate(graph,sample_size=100):
-    k_values = list(range(3, 11))
+def count_polygons_for_k(graph, k, sample_size=50):
     vertices = random.sample(list(graph.get_vertexes()), sample_size)
+    count = 0
+    start_time = time.time()
+    for start_vertex in vertices:
+        count += aprox_count_polygon_k_sides(graph, start_vertex, k)
+        if time.time() - start_time > 120:
+            break
+    return count / sample_size
+
+def estimate_growth_rate(graph, sample_size=50):
+    lower_bound = 3
+    upper_bound = 13000
+    iteration_count = 0
+    prev_mid_count = None
+
+    while iteration_count < 10:
+        mid_point = (lower_bound + upper_bound) // 2
+        lower_count = count_polygons_for_k(graph, lower_bound, sample_size)
+        mid_count = count_polygons_for_k(graph, mid_point, sample_size)
+        upper_count = count_polygons_for_k(graph, upper_bound, sample_size)
+
+        if prev_mid_count is not None and abs(prev_mid_count - mid_count) < 1:
+            break
+        prev_mid_count = mid_count
+
+        if abs(lower_count - mid_count) > abs(upper_count - mid_count):
+            upper_bound = mid_point
+        else:
+            lower_bound = mid_point
+
+        iteration_count += 1
+
     growth_rate = []
-    for k in k_values:
-        count = 0
-        start_time = time.time()
-        for start_vertex in vertices:
-            count += aprox_count_polygon_k_sides(graph, start_vertex, k)
-            if time.time() - start_time > 120:
-                break
-        growth_rate.append(count / sample_size)
-    return growth_rate
+    for k in range(lower_bound, upper_bound + 1, max(1, (upper_bound - lower_bound) // 100)):
+        growth_rate.append(count_polygons_for_k(graph, k, sample_size))
+
+    return growth_rate, lower_bound, upper_bound
 
 def plot_growth_rate(graph):
-    growth_rate = estimate_growth_rate(graph)
-    plt.plot(range(3, 11), growth_rate)
+    growth_rate, lower_bound, upper_bound = estimate_growth_rate(graph)
+    plt.plot(range(lower_bound, upper_bound + 1, max(1, (upper_bound - lower_bound) // 100)), growth_rate)
     plt.xlabel("Number of sides")
     plt.ylabel("Number of polygons")
-    plt.show()    
+    plt.show()
 
 def clustering_coefficient_local(graph, v):
-    neighbors = list(graph[v]['neighbors'])
+    neighbors = graph.get_neighbors(v)
     if len(neighbors) < 2:
         return 0.0
     links = 0
     for i, neighbor in enumerate(neighbors):
         for neighbor2 in neighbors[i+1:]:
-            if neighbor2 in graph[neighbor]['neighbors']:
+            if neighbor2 in graph.get_neighbors(neighbor):
                 links += 1
     return 2 * links / (len(neighbors) * (len(neighbors) - 1))
 
@@ -345,23 +260,24 @@ def clustering_coefficient(graph):
     clustering_coeffs = [clustering_coefficient_local(graph, v) for v in graph]
     return sum(clustering_coeffs) / len(clustering_coeffs)
 
-def betweenness_centrality(graph):
-    betweenness = {v: 0.0 for v in graph}
-    nodes = list(graph.keys())
+def betweenness_centrality(graph, sample_size=100):
+    all_vertices = list(graph.get_vertexes())
+    vertices = random.sample(all_vertices, sample_size)
+    betweenness = defaultdict(float)
 
-    for s in nodes:
+    for s in tqdm(vertices, total=len(vertices)):
         stack = []
-        predecessors = {w: [] for w in graph}
-        sigma = {t: 0.0 for t in graph}
+        predecessors = defaultdict(list)
+        sigma = defaultdict(float)
         sigma[s] = 1.0
-        distance = {t: -1 for t in graph}
+        distance = defaultdict(lambda: -1)
         distance[s] = 0
         queue = deque([s])
 
         while queue:
             v = queue.popleft()
             stack.append(v)
-            for w in graph[v]['neighbors']:
+            for w in graph.get_neighbors(v):
                 if distance[w] < 0:
                     queue.append(w)
                     distance[w] = distance[v] + 1
@@ -369,7 +285,7 @@ def betweenness_centrality(graph):
                     sigma[w] += sigma[v]
                     predecessors[w].append(v)
 
-        delta = {v: 0.0 for v in graph}
+        delta = defaultdict(float)
         while stack:
             w = stack.pop()
             for v in predecessors[w]:
@@ -380,7 +296,7 @@ def betweenness_centrality(graph):
     for v in betweenness:
         betweenness[v] /= 2.0
 
-    return betweenness
+    return max(betweenness, key=betweenness.get)
 
 def ej_extra():
     # Extra 1
@@ -388,17 +304,17 @@ def ej_extra():
     plot_growth_rate(page_graph)
     print(f"Execution time: {time.time() - start_time}")
 
-    # Extra 2
-    start_time = time.time()
-    clustering = clustering_coefficient(page_graph._graph)
-    print(f"Execution time: {time.time() - start_time}")
-    print("El coeficiente de clustering es:",clustering)
+    # # Extra 2
+    # start_time = time.time()
+    # clustering = clustering_coefficient(page_graph._graph)
+    # print(f"Execution time: {time.time() - start_time}")
+    # print("El coeficiente de clustering es:",clustering)
 
-    # Extra 3
-    start_time = time.time()
-    betweenness = betweenness_centrality(page_graph._graph)
-    print(f"Execution time: {time.time() - start_time}")
-    print("El nodo con mayor betweenness centrality es:",betweenness)
+    # # Extra 3
+    # start_time = time.time()
+    # betweenness = betweenness_centrality(page_graph)
+    # print(f"Execution time: {time.time() - start_time}")
+    # print("El nodo con mayor betweenness centrality es:",betweenness)
 
 
 def main():
@@ -407,7 +323,7 @@ def main():
     # ej3()
     # ej4()
     # ej5()
-    # ej6()
+    ej6()
 
     ej_extra()
     
